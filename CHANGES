@@ -1,0 +1,16 @@
+0.8.1
+
+  * New features:
+
+    * Mac OS X support.
+
+  * Bug fixes:
+
+    * Fixed a crash in the sensor that may occur if a malformed TCP packet is
+      captured.
+
+    * Fixed ICMP payload size calculation.
+
+0.8.0 (March 1st, 2011)
+
+  * Initial release.
