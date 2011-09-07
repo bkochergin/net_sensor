@@ -24,6 +24,8 @@
  * This work was sponsored by Ecological, LLC.
  */
 
+#include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <string>
@@ -41,14 +43,14 @@
 using namespace std;
 using namespace tr1;
 
-unordered_map <string, size_t> computers;
-multimap <size_t, string> sortedComputers;
+unordered_map <string, uint16_t> computers;
+multimap <uint16_t, string> sortedComputers;
 
-void print(const char *data, const uint32_t size) {
+void count(const char *data, const uint32_t size) {
   static uint32_t pos;
   static uint16_t length, pages;
   static string value;
-  static unordered_map <string, size_t>::iterator itr;
+  static unordered_map <string, uint16_t>::iterator itr;
   pos = 33;
   length = ntohs(*(uint16_t*)(data + pos));
   value.assign(data + pos + 2, length);
@@ -62,7 +64,14 @@ void print(const char *data, const uint32_t size) {
 }
 
 void usage(const char *program) {
-  cerr << "usage: " << program << " file..." << endl;
+  cerr << "usage: " << program << " file ..." << endl;
+}
+
+string pad(const string _string, size_t length) {
+  if (_string.length() < length) {
+    return _string + string(length - _string.length(), ' ');
+  }
+  return _string;
 }
 
 int main(int argc, char *argv[]) {
@@ -70,6 +79,8 @@ int main(int argc, char *argv[]) {
   DBT key, data;
   vector <string> files;
   bool error = false;
+  size_t longest = 0;
+  int width;
   if (argc < 2) {
     usage(argv[0]);
     return 1;
@@ -93,16 +104,21 @@ int main(int argc, char *argv[]) {
   bzero(&data, sizeof(data));
   db.add(files);
   while (db.read(key, data) != BDB_DONE) {
-    print((const char*)data.data, data.size);
+    count((const char*)data.data, data.size);
   }
   while (!computers.empty()) {
     sortedComputers.insert(make_pair(computers.begin() -> second,
                                      computers.begin() -> first));
+    if (computers.begin() -> first.length() > longest) {
+      longest = computers.begin() -> first.length();
+    }
     computers.erase(computers.begin());
   }
-  for (multimap <size_t, string>::const_reverse_iterator itr = sortedComputers.rbegin();
+  width = log10(sortedComputers.rbegin() -> first) + 1;
+  for (multimap <uint16_t, string>::const_reverse_iterator itr = sortedComputers.rbegin();
        itr != sortedComputers.rend(); ++itr) {
-    cout << itr -> second << ": " << itr -> first << " page(s)" << endl;
+    cout << pad(itr -> second + ':', longest + 2) << setfill(' ') << setw(width)
+         << itr -> first << " page(s)" << endl;
   }
   return 0;
 }
