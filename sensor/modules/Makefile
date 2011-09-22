@@ -1,4 +1,4 @@
-SUBDIRS=bt http httpLog pjl
+SUBDIRS=bt http httpLog pjl pps
 
 all:
 	@for subdir in ${SUBDIRS}; do (cd $$subdir; echo "===>" \
