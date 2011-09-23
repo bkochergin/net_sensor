@@ -34,7 +34,7 @@
 #include <auth-client.h>
 #include <libesmtp.h>
 
-enum MessageStatusType { SUBJECT, MESSAGE, DONE };
+enum MessageStatusType { MESSAGE, DONE };
 
 const char *messageCallback(void *buffer[], int *length, void *smtp);
 void monitorCallback(const char *buffer, int length, int writing, void *smtp);
@@ -43,38 +43,38 @@ int authCallback(auth_client_request_t request, char *result[], int fields,
 
 class SMTP {
   public:
-    SMTP();
     bool initialize(const std::string &server, const size_t auth,
                     const std::string &user, const std::string &password,
+                    const std::string &senderName,
+                    const std::string &senderAddress,
                     const std::vector <std::string> &recipients);
     int lock();
     int unlock();
-    bool from(const std::string from);
-    void subject(const std::string subject);
-    void message(const std::string message);
-    friend const char *messageCallback(void *buffer[], int *len, void *arg);
+    std::ostringstream &subject();
+    std::ostringstream &message();
+    bool send();
+    const std::string &error() const;
+    friend const char *messageCallback(void *buffer[], int *len, void *arg);   
     friend void monitorCallback(const char *buffer, int length, int writing,
                                 void *smtp);
     friend int authCallback(auth_client_request_t request, char *result[],
                             int fields, void *smtp);
-    bool send();
-    const std::string &error() const;
-    ~SMTP();
   private:
     pthread_mutex_t mutex;
     char _error[1024];
     std::string _server;
+    size_t _auth;
     std::string _user;
     std::string _password;
+    std::vector <std::string> _recipients;
+    std::string _senderName;
+    std::string _senderAddress;
     std::string errorMessage;
     std::vector <std::string> smtpErrors;
-    smtp_session_t session;
-    smtp_message_t _message;
-    smtp_recipient_t recipient;
-    auth_context_t authContext;
-    const smtp_status_t *status;
-    std::string _subject;
-    std::string __message;
+    std::ostringstream _subject;
+    std::string __subject;
+    std::ostringstream __message;
+    std::string ___message;
     std::string _buffer;
     MessageStatusType messageStatus;
 };

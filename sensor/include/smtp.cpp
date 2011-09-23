@@ -29,13 +29,10 @@
 
 #include "smtp.h"
 
-SMTP::SMTP() {
-  session = NULL;
-  authContext = NULL;
-}
-
 bool SMTP::initialize(const std::string &server, const size_t auth,
                       const std::string &user, const std::string &password,
+                      const std::string &senderName,
+                      const std::string &senderAddress,
                       const std::vector <std::string> &recipients) {
   int error = pthread_mutex_init(&mutex, NULL);
   if (error != 0) {
@@ -43,7 +40,39 @@ bool SMTP::initialize(const std::string &server, const size_t auth,
     errorMessage += strerror(error);
     return false;
   }
-  _server = server.substr(0, server.find(':'));
+  _server = server;
+  _auth = auth;
+  _user = user;
+  _password = password;
+  _senderName = senderName;
+  _senderAddress = senderAddress;
+  _recipients = recipients;
+  return true;
+}
+
+int SMTP::lock() {
+  return pthread_mutex_lock(&mutex);
+}
+    
+int SMTP::unlock() {
+  return pthread_mutex_unlock(&mutex);
+}
+
+std::ostringstream &SMTP::subject() {
+  return _subject;
+}
+
+std::ostringstream &SMTP::message() {
+  return __message;
+}
+
+bool SMTP::send() {
+  smtp_session_t session = NULL;
+  smtp_message_t _message;
+  smtp_recipient_t __recipients;
+  auth_context_t authContext = NULL;
+
+  smtpErrors.clear();
   session = smtp_create_session();
   if (session == NULL) {
     errorMessage = "smtp_create_session(): ";
@@ -53,17 +82,15 @@ bool SMTP::initialize(const std::string &server, const size_t auth,
   _message = smtp_add_message(session);
   if (_message == NULL) {
     errorMessage = "smtp_add_message(): ";
-    errorMessage +=  smtp_strerror(smtp_errno(), _error, sizeof(_error));
+    errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
     return false;
   }
-  if (smtp_set_server(session, server.c_str()) == 0) {
-    errorMessage = "smtp_set_server(): " + server + ": " +
+  if (smtp_set_server(session, _server.c_str()) == 0) {
+    errorMessage = "smtp_set_server(): " + _server + ": " +
                    smtp_strerror(smtp_errno(), _error, sizeof(_error));
     return false;
   }
-  if (auth == 1) {
-    _user = user;
-    _password = password;
+  if (_auth == 1) {
     auth_client_init();
     authContext = auth_create_context();
     if (authContext == NULL) {
@@ -75,14 +102,25 @@ bool SMTP::initialize(const std::string &server, const size_t auth,
     auth_set_interact_cb(authContext, authCallback, this);
     smtp_auth_set_context(session, authContext);
   }
+  if (smtp_set_reverse_path(_message, _senderAddress.c_str()) == 0) {
+    errorMessage = "smtp_set_reverse_path(): ";
+    errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
+    return false;
+  }
+  if (smtp_set_header(_message, "From", _senderName.c_str(),
+                      _senderAddress.c_str()) == 0) {
+    errorMessage = "smtp_set_header(): ";
+    errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
+    return false;
+  }
   if (smtp_set_header(_message, "To", NULL, NULL) == 0) {
     errorMessage = "smtp_set_header(): ";
     errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
     return false;
   }
-  for (size_t i = 0; i < recipients.size(); ++i) {
-    recipient = smtp_add_recipient(_message, recipients[i].c_str());
-    if (recipient == NULL) {
+  for (size_t i = 0; i < _recipients.size(); ++i) {
+    __recipients = smtp_add_recipient(_message, _recipients[i].c_str());
+    if (__recipients == NULL) {
       errorMessage = "smtp_add_recipient(): ";
       errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
       return false;
@@ -98,47 +136,15 @@ bool SMTP::initialize(const std::string &server, const size_t auth,
     errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
     return false;
   }
-  return true;
-}
-
-int SMTP::lock() {
-  return pthread_mutex_lock(&mutex);
-}
-
-int SMTP::unlock() {
-  return pthread_mutex_unlock(&mutex);
-}
-
-bool SMTP::from(const std::string from) {
-  if (smtp_set_reverse_path(_message, from.c_str()) == 0) {
-    errorMessage = "smtp_set_reverse_path(): ";
-    errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
-    return false;
+  ___message = "Subject: " + _subject.str() + "\r\n\r\n";
+  /* Convert bare LFs to CR LFs. */
+  for (size_t i = 0; i < __message.str().length(); ++i) {
+    if (__message.str()[i] == '\n' && __message.str()[i - 1] != '\r') {
+      ___message += '\r';
+    }
+    ___message += __message.str()[i];
   }
-  return true;
-}
-
-void SMTP::subject(const std::string subject) {
-  _subject = "Subject: " + subject + "\r\n";
-}
-
-void SMTP::message(const std::string message) {
-  __message = "\r\n" + message;
-}
-
-bool SMTP::send() {
-  messageStatus = SUBJECT;
-  if (smtp_message_reset_status(_message) == 0) {
-    errorMessage = "smtp_message_reset_status(): ";
-    errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
-    return false;
-  }
-  if (smtp_recipient_reset_status(recipient) == 0) {
-    errorMessage = "smtp_recipient_reset_status(): ";
-    errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
-    return false;
-  }
-  smtpErrors.clear();
+  messageStatus = MESSAGE;
   if (smtp_start_session(session) == 0) {
     errorMessage = "smtp_start_session(): " + _server + ": " + strerror(errno);
     return false;
@@ -148,6 +154,9 @@ bool SMTP::send() {
                    implode(smtpErrors, ", ");
     return false;
   }
+  smtp_destroy_session(session);
+  auth_destroy_context(authContext);
+  auth_client_exit();
   return true;
 }
 
@@ -155,21 +164,17 @@ const std::string &SMTP::error() const {
   return errorMessage;
 }
 
-const char *messageCallback(void *buffer[] __attribute__((unused)), int *length, void *smtp) {
+const char *messageCallback(void *buffer[] __attribute__((unused)),
+                            int *length, void *smtp) {
   SMTP *_smtp = (SMTP*)smtp;
   if (length == NULL) {
     return NULL;
   }
   switch (_smtp -> messageStatus) {
-    case SUBJECT:
-      _smtp -> messageStatus = MESSAGE;
-      *length = _smtp -> _subject.length();
-      return _smtp -> _subject.c_str();
-      break;
     case MESSAGE:
       _smtp -> messageStatus = DONE;
-      *length = _smtp -> __message.length();
-      return _smtp -> __message.c_str();
+      *length = _smtp -> ___message.length();
+      return _smtp -> ___message.c_str();
       break;
     case DONE:
       return NULL;
@@ -209,10 +214,4 @@ int authCallback(auth_client_request_t request, char *result[], int fields,
     }
   }
   return 1;
-}
-
-SMTP::~SMTP() {
-  smtp_destroy_session(session);
-  auth_destroy_context(authContext);
-  auth_client_exit();
 }
