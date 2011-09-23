@@ -67,7 +67,6 @@ static uint32_t timeout;
 static Logger *logger;
 
 static SMTP smtp;
-static const string crlf = "\r\n";
 
 enum MessageType { REQUEST, RESPONSE };
 enum Action { CONNECT, ANNOUNCE, SCRAPE, ERROR };
@@ -81,47 +80,47 @@ static const string pad(const string _string, size_t length) {
 
 /* Converts HTTP tracker session to human-readable form for e-mail. */
 static void printHTTP(const HTTPSession &session, ostringstream &message) {
-  message << "HTTP tracker session:" << crlf;
+  message << "HTTP tracker session:" << endl;
   for (size_t i = 0; i < session.requests.size(); ++i) {
-    message << crlf << "Message type:\t\t\trequest" << crlf;
-    message << "Time:\t\t\t\t" << session.requests[i].time.string() << crlf;
-    message << "Client Ethernet address:\t" << textMAC(session.clientMAC) << crlf;
-    message << "Client IP address:\t\t" << textIP(session.clientIP) << crlf;
-    message << "Client port:\t\t\t" << ntohs(session.clientPort) << crlf;
-    message << "Server Ethernet address:\t" << textMAC(session.serverMAC) << crlf;
-    message << "Server IP address:\t\t" << textIP(session.serverIP) << crlf;
-    message << "Server port:\t\t\t" << ntohs(session.serverPort) << crlf;
-    message << "Request method:\t\t\t" << session.requests[i].message[0] << crlf;
-    message << "Path:\t\t\t\t" << session.requests[i].message[1] << crlf;
+    message << endl << "Message type:\t\t\trequest" << endl;
+    message << "Time:\t\t\t\t" << session.requests[i].time.string() << endl;
+    message << "Client Ethernet address:\t" << textMAC(session.clientMAC) << endl;
+    message << "Client IP address:\t\t" << textIP(session.clientIP) << endl;
+    message << "Client port:\t\t\t" << ntohs(session.clientPort) << endl;
+    message << "Server Ethernet address:\t" << textMAC(session.serverMAC) << endl;
+    message << "Server IP address:\t\t" << textIP(session.serverIP) << endl;
+    message << "Server port:\t\t\t" << ntohs(session.serverPort) << endl;
+    message << "Request method:\t\t\t" << session.requests[i].message[0] << endl;
+    message << "Path:\t\t\t\t" << session.requests[i].message[1] << endl;
     if (session.requests[i].message[2].length() > 0) {
-      message << "Query string:\t\t\t" << session.requests[i].message[2] << crlf;
+      message << "Query string:\t\t\t" << session.requests[i].message[2] << endl;
     }
     if (session.requests[i].message[3].length() > 0) {
-      message << "Fragment:\t\t\t" << session.requests[i].message[3] << crlf;
+      message << "Fragment:\t\t\t" << session.requests[i].message[3] << endl;
     }
-    message << "Protocol version:\t\tHTTP/" << session.requests[i].message[4] << crlf;
+    message << "Protocol version:\t\tHTTP/" << session.requests[i].message[4] << endl;
     if (session.requests[i].headers.size() > 0) {
       for (size_t j = 0; j < session.requests[i].headers.size(); ++j) {
         message << pad("Header/" + session.requests[i].headers[j].first + ':', 4)
-                << session.requests[i].headers[j].second << crlf;
+                << session.requests[i].headers[j].second << endl;
       }
     }
   }
   for (size_t i = 0; i < session.responses.size(); ++i) {
-    message << crlf << "Message type:\t\t\tresponse" << crlf;
-    message << "Time:\t\t\t\t" << session.responses[i].time.string() << crlf;
-    message << "Client Ethernet address:\t" << textMAC(session.clientMAC) << crlf;
-    message << "Client IP address:\t\t" << textIP(session.clientIP) << crlf;
-    message << "Client port:\t\t\t" << ntohs(session.clientPort) << crlf;
-    message << "Server Ethernet address:\t" << textMAC(session.serverMAC) << crlf;
-    message << "Server IP address:\t\t" << textIP(session.serverIP) << crlf;
-    message << "Server port:\t\t\t" << ntohs(session.serverPort) << crlf;
-    message << "Protocol version:\t\tHTTP/" << session.responses[i].message[0] << crlf;
-    message << "Response code:\t\t\t" << session.responses[i].message[1] << crlf;
+    message << endl << "Message type:\t\t\tresponse" << endl;
+    message << "Time:\t\t\t\t" << session.responses[i].time.string() << endl;
+    message << "Client Ethernet address:\t" << textMAC(session.clientMAC) << endl;
+    message << "Client IP address:\t\t" << textIP(session.clientIP) << endl;
+    message << "Client port:\t\t\t" << ntohs(session.clientPort) << endl;
+    message << "Server Ethernet address:\t" << textMAC(session.serverMAC) << endl;
+    message << "Server IP address:\t\t" << textIP(session.serverIP) << endl;
+    message << "Server port:\t\t\t" << ntohs(session.serverPort) << endl;
+    message << "Protocol version:\t\tHTTP/" << session.responses[i].message[0] << endl;
+    message << "Response code:\t\t\t" << session.responses[i].message[1] << endl;
     if (session.responses[i].headers.size() > 0) {
       for (size_t j = 0; j < session.responses[i].headers.size(); ++j) {
         message << pad("Header/" + session.responses[i].headers[j].first + ':', 4)
-                << session.responses[i].headers[j].second << crlf;
+                << session.responses[i].headers[j].second << endl;
       }
     }
   }
@@ -229,35 +228,35 @@ static string ip(const uint32_t &ip) {
 
 /* Converts UDP tracker session to human-readable form for e-mail. */
 static void printUDP(const UDPTrackerSession &session, ostringstream &message) {
-  message << "UDP tracker session:\t\t" << crlf << crlf;
-  message << "Client Ethernet address:\t" << textMAC(session.clientMAC()) << crlf;
-  message << "Client IP address:\t\t" << textIP(session.clientIP()) << crlf;
-  message << "Client port:\t\t\t" << ntohs(session.clientPort()) << crlf;
-  message << "Tracker Ethernet address:\t" << textMAC(session.serverMAC()) << crlf;
-  message << "Tracker IP Address:\t\t" << textIP(session.serverIP()) << crlf;
-  message << "Tracker port:\t\t\t" << ntohs(session.serverPort()) << crlf;
+  message << "UDP tracker session:\t\t" << endl << endl;
+  message << "Client Ethernet address:\t" << textMAC(session.clientMAC()) << endl;
+  message << "Client IP address:\t\t" << textIP(session.clientIP()) << endl;
+  message << "Client port:\t\t\t" << ntohs(session.clientPort()) << endl;
+  message << "Tracker Ethernet address:\t" << textMAC(session.serverMAC()) << endl;
+  message << "Tracker IP Address:\t\t" << textIP(session.serverIP()) << endl;
+  message << "Tracker port:\t\t\t" << ntohs(session.serverPort()) << endl;
   for (size_t i = 0; i < session.announceRequests().size(); ++i) {
-    message << crlf;
-    message << "Message type:\t\t\tannounce request" << crlf;
-    message << "Time:\t\t\t\t" << session.announceRequests()[i].time().string() << crlf;
-    message << "Info hash:\t\t\t" << infoHash(session.announceRequests()[i].infoHash()) << crlf;
-    message << "Peer ID:\t\t\t" << peerID(session.announceRequests()[i].peerID()) << crlf;
-    message << "Downloaded:\t\t\t" << size(ntohq(session.announceRequests()[i].downloaded())) << crlf;
-    message << "Left:\t\t\t\t" << size(ntohq(session.announceRequests()[i].left())) << crlf;
-    message << "Uploaded:\t\t\t" << size(ntohq(session.announceRequests()[i].uploaded())) << crlf;
-    message << "Event:\t\t\t\t" << event(ntohl(session.announceRequests()[i].event())) << crlf;
-    message << "IP:\t\t\t\t" << ip(ntohl(session.announceRequests()[i].ip())) << crlf;
-    message << "Key:\t\t\t\t" << hex << setw(4) << setfill('0') << session.announceRequests()[i].key() << crlf;
-    message << "Peers wanted:\t\t\t" << dec << ntohl(session.announceRequests()[i].peers()) << crlf;
-    message << "Port:\t\t\t\t" << ntohs(session.announceRequests()[i].port()) << crlf;
+    message << endl;
+    message << "Message type:\t\t\tannounce request" << endl;
+    message << "Time:\t\t\t\t" << session.announceRequests()[i].time().string() << endl;
+    message << "Info hash:\t\t\t" << infoHash(session.announceRequests()[i].infoHash()) << endl;
+    message << "Peer ID:\t\t\t" << peerID(session.announceRequests()[i].peerID()) << endl;
+    message << "Downloaded:\t\t\t" << size(ntohq(session.announceRequests()[i].downloaded())) << endl;
+    message << "Left:\t\t\t\t" << size(ntohq(session.announceRequests()[i].left())) << endl;
+    message << "Uploaded:\t\t\t" << size(ntohq(session.announceRequests()[i].uploaded())) << endl;
+    message << "Event:\t\t\t\t" << event(ntohl(session.announceRequests()[i].event())) << endl;
+    message << "IP:\t\t\t\t" << ip(ntohl(session.announceRequests()[i].ip())) << endl;
+    message << "Key:\t\t\t\t" << hex << setw(4) << setfill('0') << session.announceRequests()[i].key() << endl;
+    message << "Peers wanted:\t\t\t" << dec << ntohl(session.announceRequests()[i].peers()) << endl;
+    message << "Port:\t\t\t\t" << ntohs(session.announceRequests()[i].port()) << endl;
   }
   for (size_t i = 0; i < session.announceResponses().size(); ++i) {
-    message << crlf;
-    message << "Message type:\t\t\tannounce response" << crlf;
-    message << "Time:\t\t\t\t" << session.announceResponses()[i].time().string() << crlf;
-    message << "Announce interval:\t\t" << ntohl(session.announceResponses()[i].interval()) << " seconds" << crlf;
-    message << "Leechers:\t\t\t" << ntohl(session.announceResponses()[i].leechers()) << crlf;
-    message << "Seeders:\t\t\t" << ntohl(session.announceResponses()[i].seeders()) << crlf;
+    message << endl;
+    message << "Message type:\t\t\tannounce response" << endl;
+    message << "Time:\t\t\t\t" << session.announceResponses()[i].time().string() << endl;
+    message << "Announce interval:\t\t" << ntohl(session.announceResponses()[i].interval()) << " seconds" << endl;
+    message << "Leechers:\t\t\t" << ntohl(session.announceResponses()[i].leechers()) << endl;
+    message << "Seeders:\t\t\t" << ntohl(session.announceResponses()[i].seeders()) << endl;
     for (size_t j = 0; j < session.announceResponses()[i].peers().size(); ++j) {
       if (j < 9) {
         message << "Peer " << j + 1 << ":\t\t\t\t";
@@ -267,7 +266,7 @@ static void printUDP(const UDPTrackerSession &session, ostringstream &message) {
       }
       message << textIP(session.announceResponses()[i].peers()[j].ip()) << ':'
               << ntohs(session.announceResponses()[i].peers()[j].port())
-              << crlf;
+              << endl;
     }
   }
 }
@@ -313,11 +312,9 @@ extern "C" {
                          conf.getNumber("smtpAuth"),
                          conf.getString("smtpUser"),
                          conf.getString("smtpPassword"),
+                         conf.getString("senderName"),
+                         conf.getString("senderAddress"),
                          conf.getStrings("recipient"))) {
-      error = smtp.error();
-      return 1;
-    }
-    if (!smtp.from(conf.getString("from"))) {
       error = smtp.error();
       return 1;
     }
@@ -469,44 +466,44 @@ extern "C" {
   }
 
   int processHTTP(const shared_ptr <HTTPSession> session) {
-    static string path, subject;
-    static ostringstream message;
+    static string path;
     for (size_t i = 0; i < session -> requests.size(); ++i) {
       path = session -> requests[i].message[1];
       /* Detect HTTP torrent file downloads. */
-      if (path.length() >= 8 && strcasecmp(path.substr(path.length() - 8).c_str(), ".torrent") == 0) {
-        subject = "Torrent file download by " + textIP(session -> clientIP) +
-                  " (" + textMAC(session -> clientMAC) + ") detected";
+      if (path.length() >= 8 && strcasecmp(path.substr(path.length() - 8).c_str(),
+                                                       ".torrent") == 0) {
         /* Lock the SMTP client to prevent a race with flush(). */
         smtp.lock();
-        smtp.subject(subject);
-        printHTTP(*session, message);
-        smtp.message(message.str());
-        message.str("");
+        smtp.subject() << "Torrent file download by "
+                       << textIP(session -> clientIP) << " ("
+                       << textMAC(session -> clientMAC) << ") detected";
+        printHTTP(*session, smtp.message());
         if (!smtp.send()) {
           logger -> lock();
           (*logger) << logger -> time() << "BitTorrent module: smtp::send(): "
                     << smtp.error() << endl;
           logger -> unlock();
         }
+        smtp.subject().str("");
+        smtp.message().str("");
         smtp.unlock();
       }
       /* Detect HTTP tracker communication. */
       if (session -> requests[i].message[2].find("info_hash") != string::npos) {
-        subject = "HTTP tracker communication by " + textIP(session -> clientIP) +
-                  " (" + textMAC(session -> clientMAC) + ") detected";
         /* Lock the SMTP client to prevent a race with flush(). */
         smtp.lock();
-        smtp.subject(subject);
-        printHTTP(*session, message);
-        smtp.message(message.str());
-        message.str("");
+        smtp.subject() << "HTTP tracker communication by "
+                       << textIP(session -> clientIP) << " ("
+                       << textMAC(session -> clientMAC) << ") detected";
+        printHTTP(*session, smtp.message());
         if (!smtp.send()) {
           logger -> lock();
           (*logger) << logger -> time() << "BitTorrent module: smtp::send(): "
                     << smtp.error() << endl;
           logger -> unlock();
         }
+        smtp.subject().str("");
+        smtp.message().str("");
         smtp.unlock();
       }
     }
@@ -516,7 +513,6 @@ extern "C" {
   int flush() {
     static time_t _time;
     static unordered_map <string, shared_ptr <UDPTrackerSession> >::local_iterator localItr;
-    static ostringstream subject, message;
     static vector <string> erase;
     _time = time(NULL);
     if (sessions.size() > 0) {
@@ -539,24 +535,22 @@ extern "C" {
              */
             if (localItr -> second -> announceRequests().size() > 0 ||
                 localItr -> second -> announceResponses().size() > 0) {
-              subject << "UDP tracker communication by "
-                      << textIP(localItr -> second -> clientIP()) << " ("
-                      << textMAC(localItr -> second -> clientMAC())
-                      << ") detected";
               /* Lock the SMTP client to prevent a race with processHTTP(). */
               smtp.lock();
-              smtp.subject(subject.str());
-              printUDP(*(localItr -> second), message);
-              smtp.message(message.str());
+              smtp.subject() << "UDP tracker communication by "
+                             << textIP(localItr -> second -> clientIP()) << " ("
+                             << textMAC(localItr -> second -> clientMAC())
+                             << ") detected";
+              printUDP(*(localItr -> second), smtp.message());
               if (!smtp.send()) {
                 logger -> lock();
                 (*logger) << logger -> time() << "BitTorrent: smtp::send(): "
                           << smtp.error() << endl;
                 logger -> unlock();
               }
+              smtp.subject().str("");
+              smtp.message().str("");
               smtp.unlock();
-              subject.str("");
-              message.str("");
             }
             erase.push_back(localItr -> first);
           }
