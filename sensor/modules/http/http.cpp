@@ -450,7 +450,6 @@ extern "C" {
           }
         }
         for (size_t j = 0; j < erase.size(); ++j) { 
-          sessions.erase(sessions.find(erase[j].first));
           /*
            * We're only interested in doing anything with sessions with at
            * least one request or response.
