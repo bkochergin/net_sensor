@@ -26,6 +26,7 @@
 
 #include <iomanip>
 #include <map>
+#include <queue>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -33,17 +34,21 @@
 #include <tr1/unordered_map>
 
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
 #include <include/address.h>
 #include <include/configuration.h>
+#include <include/dns.h>
 #include <include/endian.h>
 #include <include/logger.h>
 #include <include/memory.hpp>
 #include <include/packet.h>
 #include <include/smtp.h>
+#include <include/string.h>
 
+#include "mail.hpp"
 #include "stats.hpp"
 
 using namespace std;
@@ -61,11 +66,11 @@ static Memory <Stats> memory;
 /* Locks for the stats table. */
 static pthread_mutex_t *locks;
 static bool warning = true;
-static uint32_t timeout, threshold, mailInterval, lastFlush;
+static uint32_t timeout, threshold, mailInterval, lastFlush, numPackets;
+static string interface;
 static Logger *logger;
 
 static SMTP smtp;
-static const string crlf = "\r\n";
 
 static const string pad(const string _string, size_t length) {
   if (_string.length() < length * 8) {
@@ -119,12 +124,23 @@ static string size(double bytes) {
   return size.str();
 }
 
+void shell(ostringstream &output, const string &command) {
+  FILE *stdout = popen(command.c_str(), "r");
+  char line[1024];
+  while (fgets(line, sizeof(line), stdout) != NULL) {
+    output << line;
+  }
+  pclose(stdout);
+}
+
 extern "C" {
   int initialize(const Configuration &conf, Logger &logger, string &error) {
     int _error;
     timeout = conf.getNumber("timeout");
     threshold = conf.getNumber("threshold");
     mailInterval = conf.getNumber("mailInterval");
+    interface = conf.getString("interface");
+    numPackets = conf.getNumber("numPackets");
     lastFlush = time(NULL);
     ::logger = &logger;
     /*
@@ -163,11 +179,9 @@ extern "C" {
                          conf.getNumber("smtpAuth"),
                          conf.getString("smtpUser"),
                          conf.getString("smtpPassword"),
+                         conf.getString("senderName"),
+                         conf.getString("senderAddress"),
                          conf.getStrings("recipient"))) {
-      error = smtp.error();
-      return 1;
-    }
-    if (!smtp.from(conf.getString("from"))) {
       error = smtp.error();
       return 1;
     }
@@ -247,7 +261,10 @@ extern "C" {
     static unordered_map <uint32_t, shared_ptr <Stats> >::local_iterator localItr;
     static vector <uint32_t> erase;
     static uint64_t incomingPPS, outgoingPPS;
-    static ostringstream subject, message;
+    static queue <PPSMail> mailQueue;
+    static vector <string> ptrRecords;
+    static string ip, _ptrRecords;
+    static ostringstream command;
     _time = time(NULL);
     if (addressStats.size() > 0) {
       for (size_t i = 0; i < addressStats.bucket_count(); ++i) {
@@ -269,33 +286,10 @@ extern "C" {
           outgoingPPS = localItr -> second -> outgoingPackets / (_time - lastFlush);
           if ((incomingPPS >= threshold || outgoingPPS >= threshold) &&
               _time - localItr -> second -> lastEmail >= mailInterval) {
+            mailQueue.push(PPSMail(localItr -> first, incomingPPS, outgoingPPS,
+                                   localItr -> second -> incomingBytes,
+                                   localItr -> second -> outgoingBytes));
             localItr -> second -> lastEmail = _time; 
-            subject << threshold << " Packets/s Threshold Exceeded by "
-                    << textIP(localItr -> first);
-            message << "The IP address " << textIP(localItr -> first)
-                    << " has exceeded the configured threshold of "
-                    << threshold << " packets/s in one direction." << crlf
-                    << crlf << pad("Incoming packet rate:", 3)
-                    << incomingPPS << "/s" << crlf
-                    << pad("Outgoing packet rate:", 3)
-                    << outgoingPPS << "/s" << crlf
-                    << pad("Incoming data rate:", 3)
-                    << size(localItr -> second -> incomingBytes / (_time - lastFlush))
-                    << "/s" << crlf << pad("Outgoing data rate:", 3)
-                    << size(localItr -> second -> outgoingBytes / (_time - lastFlush))
-                    << "/s" << crlf << crlf << "Another e-mail about this IP "
-                    << "will not be sent for " << mailInterval
-                    << " seconds.";
-            smtp.subject(subject.str());
-            smtp.message(message.str());            
-            if (!smtp.send()) {
-              logger -> lock();
-              (*logger) << logger -> time() << "PPS: smtp::send(): "
-                        << smtp.error() << endl;
-              logger -> unlock();
-            }
-            subject.str("");
-            message.str("");
           }
           localItr -> second -> incomingPackets = 0;
           localItr -> second -> outgoingPackets = 0;
@@ -306,6 +300,46 @@ extern "C" {
           addressStats.erase(addressStats.find(erase[j]));
         }
         pthread_mutex_unlock(&(locks[i]));
+        while (!mailQueue.empty()) {
+          ip = textIP(mailQueue.front().ip());
+          smtp.subject() << threshold << " Packets/s Threshold Exceeded by "
+                         << ip;
+          smtp.message() << "The IP address " << ip; 
+          getPTRRecords(ptrRecords, mailQueue.front().ip());
+          if (ptrRecords.size() > 0) {
+            _ptrRecords = implode(ptrRecords, ", ");
+            ptrRecords.clear();
+            smtp.subject() << " (" << _ptrRecords << ")";
+            smtp.message() << " (" << _ptrRecords << ")";
+          }
+          smtp.message() << " has exceeded the configured threshold of "
+                         << threshold << " packets/s in one direction." << endl
+                         << endl << pad("Incoming packet rate:", 3)
+                         << mailQueue.front().incomingPPS() << "/s" << endl
+                         << pad("Outgoing packet rate:", 3)
+                         << mailQueue.front().outgoingPPS() << "/s" << endl
+                         << pad("Incoming data rate:", 3)
+                         << size(mailQueue.front().incomingBytes() / (_time - lastFlush))
+                         << "/s" << endl << pad("Outgoing data rate:", 3)
+                         << size(mailQueue.front().outgoingBytes() / (_time - lastFlush))
+                         << "/s" << endl << endl << "Another e-mail about this "
+                         << "IP will not be sent for " << mailInterval
+                         << " seconds." << endl << endl;
+          command << "tcpdump -c " << numPackets << " -n -i " << interface
+                  << " host " << ip;
+          smtp.message() << "# " << command.str() << endl << endl;
+          shell(smtp.message(), command.str());
+          command.str("");
+          mailQueue.pop();
+          if (!smtp.send()) {
+            logger -> lock();
+            (*logger) << logger -> time() << "PPS: smtp::send(): "
+                      << smtp.error() << endl;
+            logger -> unlock();
+          }
+          smtp.subject().str("");
+          smtp.message().str("");
+        }
         erase.clear();
       }
     }

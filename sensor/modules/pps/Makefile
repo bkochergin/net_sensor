@@ -1,6 +1,6 @@
 include ../Makefile.inc
 
-pps.so: pps.cpp Makefile
+pps.so: mail.hpp stats.hpp pps.cpp Makefile
 	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC ${INCLUDES} \
 		-I/usr/local/include -c pps.cpp
 	${CXX} ${CXXFLAGS} -Wall -Wextra -shared -lesmtp -L/usr/local/lib \

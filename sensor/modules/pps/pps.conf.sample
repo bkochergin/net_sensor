@@ -22,8 +22,11 @@ threshold="10000"				# packets per second after which an e-mail will be sent
 mailInterval="1800"				# send e-mail about an IP no more than once per this many seconds
 maxIPs="50000"					# maximum number of IPs for which to keep stats in memory
 timeout="10"					# IP traffic timeout, in seconds
+interface="em0"					# interface to capture offending host traffic on
+numPackets="200"				# number of packets to capture for offensing host
 
-from="PPS Alert <ppsalert@some.domain>"		# FROM e-mail field
+senderName="PPS Alert"				# name portion of "From" message header
+senderAddress="ppsalert@some.domain"		# SMTP envelope sender and address portion of "From" message header
 
 recipient="user1@some.other.domain"		# e-mail address to send notifications to (multiple allowed)
 recipient="user2@yet.another.domain"
