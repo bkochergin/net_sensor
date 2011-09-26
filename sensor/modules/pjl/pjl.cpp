@@ -47,7 +47,7 @@ using namespace tr1;
  * structures with flow IDs as keys.
  */
 static unordered_map <string, shared_ptr <PJLSession> > sessions;
-static unordered_map <string, shared_ptr <PJLSession> >::iterator sessionItr;
+static unordered_map <string, shared_ptr <PJLSession> >::iterator itr;
 static shared_ptr <PJLSession> session;
 /* Session memory allocator. */
 static Memory <PJLSession> memory;
@@ -208,8 +208,8 @@ extern "C" {
      */
     pthread_mutex_lock(&(locks[bucket]));
     /* Check the session table for a session with this flow ID. */
-    sessionItr = sessions.find(flowID.data());
-    if (sessionItr == sessions.end()) {
+    itr = sessions.find(flowID.data());
+    if (itr == sessions.end()) {
       session = memory.allocate();
       if (session == shared_ptr <PJLSession>()) {
         pthread_mutex_unlock(&(locks[bucket]));
@@ -222,32 +222,33 @@ extern "C" {
         }
         return 0;
       }
-      sessions.insert(make_pair(flowID.data(), session));
-      session -> startTime = packet.time();
-      memcpy(session -> clientMAC, packet.sourceMAC(), ETHER_ADDR_LEN);
-      memcpy(session -> serverMAC, packet.destinationMAC(), ETHER_ADDR_LEN);
-      session -> clientIP = packet.sourceIP();
-      session -> serverIP = packet.destinationIP();
-      session -> clientPort = packet.sourcePort();
-      session -> serverPort = packet.destinationPort();
-      session -> size = 0;
-      session -> pages = 0;
-      session -> outOfMemory = 0;
+      itr = sessions.insert(make_pair(flowID.data(), session)).first;
+      itr -> second -> startTime = packet.time();
+      memcpy(itr -> second -> clientMAC, packet.sourceMAC(), ETHER_ADDR_LEN);
+      memcpy(itr -> second -> serverMAC, packet.destinationMAC(),
+             ETHER_ADDR_LEN);
+      itr -> second -> clientIP = packet.sourceIP();
+      itr -> second -> serverIP = packet.destinationIP();
+      itr -> second -> clientPort = packet.sourcePort();
+      itr -> second -> serverPort = packet.destinationPort();
+      itr -> second -> size = 0;
+      itr -> second -> pages = 0;
+      itr -> second -> outOfMemory = 0;
     }
-    session -> lastUpdate = packet.time().seconds();
-    session -> size += packet.payloadSize();
+    itr -> second -> lastUpdate = packet.time().seconds();
+    itr -> second -> size += packet.payloadSize();
     end = packet.payload();
     end = (const u_char*)memchr(packet.payload(), '\n', packet.payloadSize());
     if (end == NULL) {
-      session -> line.append((const char*)packet.payload(),
-                             packet.payloadSize());
+      itr -> second -> line.append((const char*)packet.payload(),
+                                   packet.payloadSize());
     }
     else {
       start = packet.payload();
       while (end != NULL) {
-        session -> line.append((const char*)start, end - start);
-        parse(*session);
-        session -> line.clear();
+        itr -> second -> line.append((const char*)start, end - start);
+        parse(*(itr -> second));
+        itr -> second -> line.clear();
         if (end < packet.payload() + packet.payloadSize() - 1) {
           start = end + 1;
           end = (const u_char*)memchr(start, '\n',
@@ -258,8 +259,8 @@ extern "C" {
           return 0;
         }
       }
-      session -> line.append((const char*)start,
-                             packet.payload() + packet.payloadSize() - start);
+      itr -> second -> line.append((const char*)start,
+                                   packet.payload() + packet.payloadSize() - start);
     }
     pthread_mutex_unlock(&(locks[bucket]));
     return 0;
