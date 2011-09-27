@@ -1,4 +1,4 @@
-SUBDIRS=include countPJL dumpHTTP dumpPJL
+SUBDIRS=include countPJL deleteRecords dumpHTTP dumpPJL
 
 all: ${SUBDIRS} Makefile
 	@for subdir in ${SUBDIRS}; do (cd $$subdir; echo "===>" \
