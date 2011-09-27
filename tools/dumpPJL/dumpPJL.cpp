@@ -88,7 +88,7 @@ void print(const char *data) {
 }
 
 void usage(const char *program) {
-  cerr << "usage: " << program << " file..." << endl;
+  cerr << "usage: " << program << " file ..." << endl;
 }
 
 int main(int argc, char *argv[]) {
