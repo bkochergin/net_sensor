@@ -30,6 +30,7 @@
 
 #include <errno.h>
 #include <netinet/in.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <include/address.h>
