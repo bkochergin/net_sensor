@@ -25,6 +25,7 @@
  */
 
 #include <iomanip>
+#include <locale>
 #include <map>
 #include <queue>
 #include <sstream>
@@ -133,6 +134,13 @@ void shell(ostringstream &output, const string &command) {
   pclose(stdout);
 }
 
+class Thousands : public numpunct <char> {
+  protected:
+    string do_grouping() const {
+      return "\003";
+    }
+};
+
 extern "C" {
   int initialize(const Configuration &conf, Logger &logger, string &error) {
     int _error;
@@ -185,6 +193,10 @@ extern "C" {
       error = smtp.error();
       return 1;
     }
+    smtp.subject().imbue(locale(smtp.subject().getloc(),
+                         new Thousands()));
+    smtp.message().imbue(locale(smtp.message().getloc(),
+                               new Thousands()));
     for (size_t i = 0; i < conf.getStrings("addresses").size(); ++i) {
       networks.insert(cidrToIPs(conf.getStrings("addresses")[i]));
     }
@@ -302,8 +314,10 @@ extern "C" {
         pthread_mutex_unlock(&(locks[i]));
         while (!mailQueue.empty()) {
           ip = textIP(mailQueue.front().ip());
-          smtp.subject() << threshold << " Packets/s Threshold Exceeded by "
-                         << ip;
+          smtp.subject() << threshold << " Packets/s Threshold Exceeded ("
+                         << mailQueue.front().incomingPPS() << " packets/s in, "
+                         << mailQueue.front().outgoingPPS()
+                         << " packets/s out) by " << ip;
           smtp.message() << "The IP address " << ip; 
           getPTRRecords(ptrRecords, mailQueue.front().ip());
           if (ptrRecords.size() > 0) {
