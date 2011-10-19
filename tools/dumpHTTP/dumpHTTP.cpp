@@ -216,9 +216,9 @@ void print(const char *data) {
 }
 
 void usage(const char *program) {
-  cerr << "usage: " << program << " [-cE client Ethernet address] [-sE server "
-       << "Ethernet address] [-rM request method] [-p path] [-q query string] "
-       << "[-f fragment] file ..." << endl;
+  cerr << "usage: " << program << " [-req|-res] [-cE client Ethernet address] "
+       << "[-sE server Ethernet address] [-rM request method] [-p path] "
+       << "[-q query string] [-f fragment] file ..." << endl;
 }
 
 int main(int argc, char *argv[]) {
