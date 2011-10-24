@@ -45,7 +45,8 @@ using namespace std;
 
 /* Available command-line options. */
 enum { REQUESTS, RESPONSES, CLIENT_ETHERNET_ADDRESS, SERVER_ETHERNET_ADDRESS,
-       REQUEST_METHOD, PATH, QUERY_STRING, FRAGMENT };
+       CLIENT_IP_ADDRESS, SERVER_IP_ADDRESS, REQUEST_METHOD, PATH, QUERY_STRING,
+       FRAGMENT };
 
 bool printRequests = true, printResponses = true, checkRequestType,
      checkPath = false, checkQueryString = false, checkFragment = false;
@@ -62,15 +63,11 @@ string pad(const string _string, size_t length) {
 
 void print(const char *data) {
   static TimeStamp time;
-  static const char *clientMAC;
-  static const char *serverMAC;
-  static uint32_t *clientIP;
-  static uint32_t *serverIP;
-  static uint16_t *clientPort;
-  static uint16_t *serverPort;
+  static const char *clientMAC, *serverMAC;
+  static uint32_t *clientIP, *serverIP, ip, length, numMessages, total;
+  static uint16_t *clientPort, *serverPort;
   static vector <HTTPMessage> messages;
   static size_t position;
-  static uint32_t length, numMessages, total;
   static bool match;
   clientMAC = data + 1;
   serverMAC = data + 7;
@@ -100,6 +97,34 @@ void print(const char *data) {
         break;
       }
     }
+    if (match == false) {
+      return;
+    }
+  }
+  /* Match client IP addresses. */
+  if (clientIPs.size() > 0) {
+    ip = ntohl(*clientIP);
+    match = false;
+    for (size_t i = 0; i < clientIPs.size(); ++i) {
+      if (ip >= clientIPs[i].first && ip <= clientIPs[i].second) {
+        match = true;
+        break;
+      }
+    }
+    if (match == false) {
+      return;
+    }
+  }
+  /* Match server IP addresses. */
+  if (serverIPs.size() > 0) {
+    ip = ntohl(*serverIP);
+    match = false;
+    for (size_t i = 0; i < serverIPs.size(); ++i) {
+      if (ip >= serverIPs[i].first && ip <= serverIPs[i].second) {
+        match = true;
+        break;
+      }
+    } 
     if (match == false) {
       return;
     }
@@ -218,12 +243,13 @@ void print(const char *data) {
 
 void usage(const char *program) {
   cerr << "usage: " << program << " [-req|-res] [-cE client Ethernet address] "
-       << "[-sE server Ethernet address] [-rM request method] [-p path] "
+       << "[-sE server Ethernet address] [-cI client IP address (CIDR)] "
+       << "[-sI server IP address (CIDR)] [-rM request method] [-p path] "
        << "[-q query string] [-f fragment] file ..." << endl;
 }
 
 int main(int argc, char *argv[]) {
-  Options options(argc, argv, "req res cE: sE: rM: p: q: f:");
+  Options options(argc, argv, "req res cE: sE: cI: sI: rM: p: q: f:");
   int option, ret;
   char buffer[1024];
   BerkeleyDB db;
@@ -261,6 +287,12 @@ int main(int argc, char *argv[]) {
         break;
       case SERVER_ETHERNET_ADDRESS:
         serverMACs.push_back(binaryMAC(options.argument()));
+        break;
+      case CLIENT_IP_ADDRESS:
+        clientIPs.push_back(cidrToIPs(options.argument()));
+        break;
+      case SERVER_IP_ADDRESS:
+        serverIPs.push_back(cidrToIPs(options.argument()));
         break;
       case REQUEST_METHOD:
         ret = regcomp(&(regexes[0]), options.argument().c_str(), REG_EXTENDED);
