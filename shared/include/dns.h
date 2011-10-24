@@ -40,7 +40,6 @@
  * records using the system's resolver facilities, adds them to the ptrRecords
  * vector, and sorts the vector in ascending lexicographical order.
  */
-
 void getPTRRecords(std::vector <std::string> &ptrRecords, const uint32_t &ip);
 
 /* Same as above, but creates its own vector of PTR records and returns it. */

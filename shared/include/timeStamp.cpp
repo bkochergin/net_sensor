@@ -22,11 +22,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iomanip>
-#include <sstream>
+#include <cstdio>
+#include <ctime>
 
-#include <stdio.h>
-#include <time.h>
+#include <iomanip>
 
 #include "timeStamp.h"
 

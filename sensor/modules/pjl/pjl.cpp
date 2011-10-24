@@ -24,11 +24,11 @@
  * This work was sponsored by Ecological, LLC.
  */
 
+#include <cstring>
+
 #include <string>
 #include <vector>
 #include <tr1/memory>
-
-#include <string.h>
 
 #include <include/configuration.h>
 #include <include/flowID.h>

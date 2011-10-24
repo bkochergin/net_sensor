@@ -22,10 +22,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cstring>
+
 #include <limits>
 
 #include <dlfcn.h>
-#include <string.h>
 
 #include "module.h"
 

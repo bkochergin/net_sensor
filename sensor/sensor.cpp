@@ -22,6 +22,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cerrno>
+#include <csignal>
+
 #include <iostream>
 #include <limits>
 #include <map>
@@ -34,9 +37,7 @@
 #include <sys/types.h>
 
 #include <dlfcn.h>
-#include <errno.h>
 #include <pcap.h>
-#include <signal.h>
 #include <stdint.h>
 #include <unistd.h>
 

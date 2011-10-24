@@ -25,11 +25,12 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include <ctime>
+
 #include <fstream>
 #include <string>
 
 #include <pthread.h>
-#include <time.h>
 
 class Logger {
   public:

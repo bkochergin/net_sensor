@@ -26,10 +26,7 @@
 #define STRING_H
 
 #include <string>
-#include <sstream>
 #include <vector>
-
-#include <ctype.h>
 
 void implode(std::string &_string, const std::vector <std::string> &array,
              const std::string delimiter);

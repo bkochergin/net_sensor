@@ -25,16 +25,16 @@
  * incubator at 160 Varick Street, New York, New York.
  */
 
+#include <cerrno>
+#include <cstring>
+#include <ctime>
+
 #include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
 #include <tr1/memory>
 #include <tr1/unordered_map>
-
-#include <errno.h>
-#include <string.h>
-#include <time.h>
 
 #include <include/address.h>
 #include <include/configuration.h>

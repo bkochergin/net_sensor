@@ -25,7 +25,7 @@
  * incubator at 160 Varick Street, New York, New York.
  */
 
-#include <string.h>
+#include <cstring>
 
 #include "udpTrackerSession.h"
 

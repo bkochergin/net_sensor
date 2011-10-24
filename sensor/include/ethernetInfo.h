@@ -25,15 +25,16 @@
 #ifndef ETHERNET_INFO_H
 #define ETHERNET_INFO_H
 
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
+
 #include <fstream>
 #include <string>
 #include <tr1/unordered_map>
 
 #include <arpa/inet.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
 
 class EthernetInfo {
   public:

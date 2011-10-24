@@ -25,16 +25,16 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
+
 #include <fstream>
 #include <limits>
 #include <map>
 #include <string>
 #include <vector>
-
-#include <errno.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
 
 class Configuration {
   public:

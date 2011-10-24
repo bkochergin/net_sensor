@@ -24,7 +24,7 @@
  * This work was sponsored by the New York Internet Company.
  */
 
-#include <tr1/cstdint>
+#include <stdint.h>
 
 class PPSMail {
   public:

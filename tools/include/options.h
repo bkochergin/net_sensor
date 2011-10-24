@@ -33,8 +33,6 @@
 #include <string>
 #include <tr1/unordered_map>
 
-#include <include/string.h>
-
 class Options {
   public:
     Options();

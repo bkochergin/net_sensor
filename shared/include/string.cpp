@@ -22,14 +22,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef STRING_HPP
-#define STRING_HPP
+#include <cctype>
 
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include <ctype.h>
+#include "string.h"
 
 void implode(std::string &_string, const std::vector <std::string> &array,
              const std::string delimiter) {
@@ -85,5 +80,3 @@ std::vector <std::string> explode(const std::string &_string) {
   explode(array, _string);
   return array;
 }
-
-#endif

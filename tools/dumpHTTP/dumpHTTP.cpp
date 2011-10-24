@@ -22,14 +22,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cerrno>
+#include <cstring>
+
 #include <iostream>
 #include <vector>
 #include <utility>
 
-#include <errno.h>
 #include <netinet/in.h>
 #include <regex.h>
-#include <string.h>
 #include <strings.h>
 #include <unistd.h>
 

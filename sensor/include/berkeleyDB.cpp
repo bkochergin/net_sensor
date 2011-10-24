@@ -22,14 +22,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cerrno>
+#include <cstring>
+
 #include <iomanip>
 #include <sstream>
 #include <vector>
 
 #include <sys/stat.h>
 
-#include <errno.h>
-#include <string.h>
 #include <strings.h>
 #include <unistd.h>
 

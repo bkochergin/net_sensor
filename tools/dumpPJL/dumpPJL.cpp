@@ -24,13 +24,14 @@
  * This work was sponsored by Ecological, LLC.
  */
 
+#include <cerrno>
+#include <cstring>
+
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include <errno.h>
 #include <netinet/in.h>
-#include <string.h>
 #include <unistd.h>
 
 #include <include/address.h>

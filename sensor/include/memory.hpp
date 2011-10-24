@@ -25,12 +25,12 @@
 #ifndef MEMORY_HPP
 #define MEMORY_HPP
 
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
+
 #include <stack>
 #include <tr1/memory>
-
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
 
 template <class T>
 class Memory {

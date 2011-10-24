@@ -25,6 +25,8 @@
 #ifndef ADDRESS_H
 #define ADDRESS_H
 
+#include <cstring>
+
 #include <string>
 #include <utility>
 
@@ -32,7 +34,6 @@
 
 #include <arpa/inet.h>
 #include <stdint.h>
-#include <string.h>
 
 #define	ETHER_ADDR_LEN	6
 

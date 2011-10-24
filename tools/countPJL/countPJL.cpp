@@ -24,7 +24,9 @@
  * This work was sponsored by Ecological, LLC.
  */
 
+#include <cerrno>
 #include <cmath>
+
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -32,7 +34,6 @@
 #include <tr1/unordered_map>
 #include <vector>
 
-#include <errno.h>
 #include <netinet/in.h>
 #include <unistd.h>
 

@@ -25,11 +25,11 @@
 #ifndef WRITER_HPP
 #define WRITER_HPP
 
+#include <cstring>
+
 #include <queue>
 #include <string>
 #include <tr1/memory>
-
-#include <string.h>
 
 #include <include/berkeleyDB.h>
 

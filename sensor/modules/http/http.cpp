@@ -22,16 +22,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cerrno>
+#include <cstring>
+#include <ctime>
+
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
 #include <tr1/unordered_map>
 #include <tr1/memory>
-
-#include <errno.h>
-#include <string.h>
-#include <time.h>
 
 #include <include/consumers.hpp>
 #include <include/flowID.h>

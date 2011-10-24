@@ -24,11 +24,12 @@
  * This work was sponsored by Ecological, LLC.
  */
 
+#include <climits>
+#include <cstdlib>
+
 #include <iostream>
 
-#include <limits.h>
 #include <netinet/in.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 #include <include/address.h>

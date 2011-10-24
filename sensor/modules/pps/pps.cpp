@@ -24,6 +24,11 @@
  * This work was sponsored by the New York Internet Company.
  */
 
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
+
 #include <iomanip>
 #include <locale>
 #include <map>
@@ -33,11 +38,6 @@
 #include <vector>
 #include <tr1/memory>
 #include <tr1/unordered_map>
-
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
 
 #include <include/address.h>
 #include <include/configuration.h>
