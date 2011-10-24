@@ -62,8 +62,6 @@ static bool sessionWarning = true, bufferWarning = true;
 static Writer <PJLSession> writer;
 static uint8_t version = 1;
 
-FlowID flowID;
-
 /* Converts a session in memory to on-disk format. */
 static void makeRecord(Writer <PJLSession>::Record &record,
                        const PJLSession &session) {
