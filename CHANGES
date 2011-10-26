@@ -12,7 +12,7 @@
       * Added a sensor DNS library (sensor/include/dns.*) for reverse DNS
         resolution.
 
-      * Sensor SMTP library (sensor/include/smtp.*)
+      * Sensor SMTP library (sensor/include/smtp.*):
 
         * Modified the subject() and message() member functions to return
           std::ostringstream objects that can be used to set the subject and
@@ -40,7 +40,7 @@
       * Added tools/dumpPJL for displaying data written by the PJL sensor
         module.
 
-      * tools/dumpHTTP
+      * tools/dumpHTTP:
 
         * Added the -cI and -sI command-line options for filtering messages by
           client and server IPv4 addresses, respectively.
@@ -49,7 +49,7 @@
 
     * Libraries:
 
-      * Sensor SMTP library (sensor/include/smtp.*)
+      * Sensor SMTP library (sensor/include/smtp.*):
 
         * SMTP error messages from previous attempts to send mail are no longer
           carried over and prepended to new ones.
@@ -64,7 +64,7 @@
           which a correct envelope sender and "From" message header will be
           generated.
 
-      * Shared address library (shared/include/address.*)
+      * Shared address library (shared/include/address.*):
 
         * The binaryMAC() and textMAC() functions have been converted to use
           homegrown address-conversion techniques instead of ether_aton_r()
@@ -82,16 +82,16 @@
 
     * Sensor modules:
 
-      * HTTP (sensor/modules/http)
+      * HTTP (sensor/modules/http):
 
         * Fixed a crash.
 
     * Tools
 
-      * tools/dumpHTTP
+      * tools/dumpHTTP:
 
-        * Added the -req and -res options to the usage message. The options
-          themselves were always present.
+        * Added the -req and -res command-line options to the usage message.
+          The options themselves were always present.
 
 0.8.0 (March 1st, 2011)
 
