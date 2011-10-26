@@ -329,9 +329,10 @@ extern "C" {
      * just yet, as this packet might be part of the response to a request we
      * saw earlier. The session created by that request would have been TCP
      * traffic in the opposite direction of this packet and would have
-     * therefore had a flow ID with this packet's source IPs and ports swapped
-     * with this its destination IPs and ports, respectively, so we will craft
-     * that flow ID and look for it in the session table.
+     * therefore had a flow ID with this packet's source IPv4 addresses and
+     * ports swapped with this its destination IPv4 addresses and ports,
+     * respectively, so we will craft that flow ID and look for it in the
+     * session table.
      */
     if (sessionItr == sessions.end()) {
       pthread_mutex_unlock(&(locks[bucket]));

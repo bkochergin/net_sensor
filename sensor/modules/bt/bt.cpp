@@ -85,10 +85,10 @@ static void printHTTP(const HTTPSession &session, ostringstream &message) {
     message << endl << "Message type:\t\t\trequest" << endl;
     message << "Time:\t\t\t\t" << session.requests[i].time.string() << endl;
     message << "Client Ethernet address:\t" << textMAC(session.clientMAC) << endl;
-    message << "Client IP address:\t\t" << textIP(session.clientIP) << endl;
+    message << "Client IPv4 address:\t\t" << textIP(session.clientIP) << endl;
     message << "Client port:\t\t\t" << ntohs(session.clientPort) << endl;
     message << "Server Ethernet address:\t" << textMAC(session.serverMAC) << endl;
-    message << "Server IP address:\t\t" << textIP(session.serverIP) << endl;
+    message << "Server IPv4 address:\t\t" << textIP(session.serverIP) << endl;
     message << "Server port:\t\t\t" << ntohs(session.serverPort) << endl;
     message << "Request method:\t\t\t" << session.requests[i].message[0] << endl;
     message << "Path:\t\t\t\t" << session.requests[i].message[1] << endl;
@@ -110,10 +110,10 @@ static void printHTTP(const HTTPSession &session, ostringstream &message) {
     message << endl << "Message type:\t\t\tresponse" << endl;
     message << "Time:\t\t\t\t" << session.responses[i].time.string() << endl;
     message << "Client Ethernet address:\t" << textMAC(session.clientMAC) << endl;
-    message << "Client IP address:\t\t" << textIP(session.clientIP) << endl;
+    message << "Client IPv4 address:\t\t" << textIP(session.clientIP) << endl;
     message << "Client port:\t\t\t" << ntohs(session.clientPort) << endl;
     message << "Server Ethernet address:\t" << textMAC(session.serverMAC) << endl;
-    message << "Server IP address:\t\t" << textIP(session.serverIP) << endl;
+    message << "Server IPv4 address:\t\t" << textIP(session.serverIP) << endl;
     message << "Server port:\t\t\t" << ntohs(session.serverPort) << endl;
     message << "Protocol version:\t\tHTTP/" << session.responses[i].message[0] << endl;
     message << "Response code:\t\t\t" << session.responses[i].message[1] << endl;
@@ -218,7 +218,7 @@ static string size(double bytes) {
   return size.str();
 }
 
-/* Converts announce IP to human-readable form. */
+/* Converts announce IPv4 to human-readable form. */
 static string ip(const uint32_t &ip) {
   if (ip == 0) {
     return "0 (use client IP address)";
@@ -230,10 +230,10 @@ static string ip(const uint32_t &ip) {
 static void printUDP(const UDPTrackerSession &session, ostringstream &message) {
   message << "UDP tracker session:\t\t" << endl << endl;
   message << "Client Ethernet address:\t" << textMAC(session.clientMAC()) << endl;
-  message << "Client IP address:\t\t" << textIP(session.clientIP()) << endl;
+  message << "Client IPv4 address:\t\t" << textIP(session.clientIP()) << endl;
   message << "Client port:\t\t\t" << ntohs(session.clientPort()) << endl;
   message << "Tracker Ethernet address:\t" << textMAC(session.serverMAC()) << endl;
-  message << "Tracker IP Address:\t\t" << textIP(session.serverIP()) << endl;
+  message << "Tracker IPv4 Address:\t\t" << textIP(session.serverIP()) << endl;
   message << "Tracker port:\t\t\t" << ntohs(session.serverPort()) << endl;
   for (size_t i = 0; i < session.announceRequests().size(); ++i) {
     message << endl;

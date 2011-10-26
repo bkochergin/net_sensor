@@ -51,7 +51,7 @@ std::string textMAC(const char *binaryEthernetAddress);
 std::string textMAC(const u_char *binaryEthernetAddress);
 
 /*
- * Given a text representation of an IP address in the form "192.168.0.1",
+ * Given a text representation of an IPv4 address in the form "192.168.0.1",
  * returns it in binary form, in network byte order.
  */
 uint32_t binaryIP(const std::string &textIP);
@@ -63,8 +63,8 @@ uint32_t binaryIP(const std::string &textIP);
 std::pair <uint32_t, uint32_t> cidrToIPs(const std::string &cidr);
 
 /*
- * Given a binary representation of an IP address in network byte order, returns
- * it in text form.
+ * Given a binary representation of an IPv4 address in network byte order,
+ * returns it in text form.
  */
 std::string textIP(const uint32_t &binaryIP);
 

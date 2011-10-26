@@ -101,7 +101,7 @@ void print(const char *data) {
       return;
     }
   }
-  /* Match client IP addresses. */
+  /* Match client IPv4 addresses. */
   if (clientIPs.size() > 0) {
     ip = ntohl(*clientIP);
     match = false;
@@ -115,7 +115,7 @@ void print(const char *data) {
       return;
     }
   }
-  /* Match server IP addresses. */
+  /* Match server IPv4 addresses. */
   if (serverIPs.size() > 0) {
     ip = ntohl(*serverIP);
     match = false;
@@ -204,10 +204,10 @@ void print(const char *data) {
       cout << endl;
       cout << "Time:\t\t\t\t" << messages[i].time.string() << endl;
       cout << "Client Ethernet address:\t" << textMAC(clientMAC) << endl;
-      cout << "Client IP address:\t\t" << textIP(*clientIP) << endl;
+      cout << "Client IPv4 address:\t\t" << textIP(*clientIP) << endl;
       cout << "Client port:\t\t\t" << ntohs(*clientPort) << endl;
       cout << "Server ethernet address:\t" << textMAC(serverMAC) << endl;
-      cout << "Server IP address:\t\t" << textIP(*serverIP) << endl;
+      cout << "Server IPv4 address:\t\t" << textIP(*serverIP) << endl;
       cout << "Server port:\t\t\t" << ntohs(*serverPort) << endl;
       switch (messages[i].type) {
         case HTTP_REQUEST:
@@ -243,8 +243,8 @@ void print(const char *data) {
 
 void usage(const char *program) {
   cerr << "usage: " << program << " [-req|-res] [-cE client Ethernet address] "
-       << "[-sE server Ethernet address] [-cI client IP address (CIDR)] "
-       << "[-sI server IP address (CIDR)] [-rM request method] [-p path] "
+       << "[-sE server Ethernet address] [-cI client IPv4 address (CIDR)] "
+       << "[-sI server IPv4 address (CIDR)] [-rM request method] [-p path] "
        << "[-q query string] [-f fragment] file ..." << endl;
 }
 

@@ -55,11 +55,14 @@
 using namespace std;
 using namespace tr1;
 
-/* A prefix tree of internal networks whose IPs we'll be monitoring. */
+/*
+ * A prefix tree of internal networks whose IPv4s addresses we'll be
+ * monitoring.
+ */
 map <uint32_t, uint32_t> networks;
 /*
  * The stats table is a hash table of shared pointers to Stats structures with
- * IP addresses as keys.
+ * IPv4 addresses as keys.
  */
 static unordered_map <uint32_t, shared_ptr <Stats> > addressStats;
 /* Stats memory allocator. */
@@ -152,8 +155,8 @@ extern "C" {
     lastFlush = time(NULL);
     ::logger = &logger;
     /*
-     * Rehash the address stats table for as many IPs as we may need to hold in
-     * it.
+     * Rehash the address stats table for as many IPv4 addresses as we may need
+     * to hold in it.
      */
     addressStats.rehash(conf.getNumber("maxIPs"));
     /*
@@ -204,7 +207,7 @@ extern "C" {
   }
 
   /*
-   * Determines whether an IP address belongs to any of our internal networks
+   * Determines whether an IPv4 address belongs to any of our internal networks
    * in logarithmic time.
    */
   bool internal(const map <uint32_t, uint32_t> &networks, const uint32_t &ip) {
@@ -281,15 +284,15 @@ extern "C" {
     if (addressStats.size() > 0) {
       for (size_t i = 0; i < addressStats.bucket_count(); ++i) {
         /*
-         * Lock the bucket in which we will be checking for timed-out IPs to
-         * prevent a race with processPacket().
+         * Lock the bucket in which we will be checking for timed-out IPv4
+         * addresses to prevent a race with processPacket().
          */
         pthread_mutex_lock(&(locks[i]));
         for (localItr = addressStats.begin(i); localItr != addressStats.end(i);
              ++localItr) {
           /*
-           * Remove an IP from memory if it has been idle for at least as long
-           * as the configured idle timeout.
+           * Remove an IPv4 address from memory if it has been idle for at
+           * least as long as the configured idle timeout.
            */
           if (_time - localItr -> second -> lastUpdate >= timeout) {
             erase.push_back(localItr -> first);
@@ -318,7 +321,7 @@ extern "C" {
                          << mailQueue.front().incomingPPS() << " packets/s in, "
                          << mailQueue.front().outgoingPPS()
                          << " packets/s out) by " << ip;
-          smtp.message() << "The IP address " << ip; 
+          smtp.message() << "The IPv4 address " << ip; 
           getPTRRecords(ptrRecords, mailQueue.front().ip());
           if (ptrRecords.size() > 0) {
             _ptrRecords = implode(ptrRecords, ", ");
@@ -337,7 +340,7 @@ extern "C" {
                          << "/s" << endl << pad("Outgoing data rate:", 3)
                          << size(mailQueue.front().outgoingBytes() / (_time - lastFlush))
                          << "/s" << endl << endl << "Another e-mail about this "
-                         << "IP will not be sent for " << mailInterval
+                         << "IPv4 will not be sent for " << mailInterval
                          << " seconds." << endl << endl;
           command << "tcpdump -c " << numPackets << " -n -i " << interface
                   << " host " << ip;
