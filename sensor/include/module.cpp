@@ -71,8 +71,12 @@ Module::Module(const std::string &moduleDirectory,
     errorMessage = pcap_geterr(pcapDescriptor);
     return;
   }
+  /*
+   * Older versions of libpcap expect the third argument of pcap_compile()
+   * to be of type "char*".
+   */
   if (pcap_compile(pcapDescriptor, &_bpfProgram,
-                   _conf.getString("filter").c_str(), 1, 0) == -1) {
+                   (char*)_conf.getString("filter").c_str(), 1, 0) == -1) {
     _error = true;
     errorMessage = _fileName + ": pcap_compile(): " +
                    pcap_geterr(pcapDescriptor);
