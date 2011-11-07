@@ -14,6 +14,10 @@ sensor-linux:
 	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} -ldb -ldl -lpcap \
 		-lpthread -o sensor sensor.cpp ${LIBS}
 
+sensor-linux-gnu:
+	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} -ldb -ldl -lpcap \
+		-lpthread -o sensor sensor.cpp ${LIBS}
+
 sensor-darwin:
 	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} -ldb -lpcap -lpthread \
 		-L/opt/local/lib -L/opt/local/lib/db44 -o sensor sensor.cpp \
