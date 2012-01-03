@@ -23,6 +23,8 @@
  */
 
 #include <cerrno>
+#include <climits>
+#include <cstdlib>
 #include <cstring>
 
 #include <iostream>
@@ -45,13 +47,14 @@ using namespace std;
 
 /* Available command-line options. */
 enum { REQUESTS, RESPONSES, CLIENT_ETHERNET_ADDRESS, SERVER_ETHERNET_ADDRESS,
-       CLIENT_IP_ADDRESS, SERVER_IP_ADDRESS, REQUEST_METHOD, PATH, QUERY_STRING,
-       FRAGMENT };
+       CLIENT_IP_ADDRESS, SERVER_IP_ADDRESS, CLIENT_PORT, SERVER_PORT,
+       REQUEST_METHOD, PATH, QUERY_STRING, FRAGMENT };
 
 bool printRequests = true, printResponses = true, checkRequestType,
      checkPath = false, checkQueryString = false, checkFragment = false;
 vector <string> clientMACs, serverMACs;
 vector <pair <uint32_t, uint32_t> > clientIPs, serverIPs;
+vector <uint16_t> clientPorts, serverPorts;
 regex_t regexes[5];
 
 string pad(const string _string, size_t length) {
@@ -128,6 +131,18 @@ void print(const char *data) {
     if (match == false) {
       return;
     }
+  }
+  /* Match client port. */
+  if (clientPorts.size() > 0 &&
+      find(clientPorts.begin(), clientPorts.end(),
+           ntohs(*clientPort)) == clientPorts.end()) {
+    return;
+  }
+  /* Match server port. */
+  if (serverPorts.size() > 0 &&
+      find(serverPorts.begin(), serverPorts.end(),
+           ntohs(*serverPort)) == serverPorts.end()) {
+    return;
   }
   /* Populate in-memory messages structure with the ones from disk. */
   numMessages = ntohl(*(uint32_t*)(data + 26));
@@ -244,12 +259,13 @@ void print(const char *data) {
 void usage(const char *program) {
   cerr << "usage: " << program << " [-req|-res] [-cE client Ethernet address] "
        << "[-sE server Ethernet address] [-cI client IPv4 address (CIDR)] "
-       << "[-sI server IPv4 address (CIDR)] [-rM request method] [-p path] "
-       << "[-q query string] [-f fragment] file ..." << endl;
+       << "[-sI server IPv4 address (CIDR)] [-cP client port] "
+       << "[-sP server port] [-rM request method] [-p path] [-q query string] "
+       << "[-f fragment] file ..." << endl;
 }
 
 int main(int argc, char *argv[]) {
-  Options options(argc, argv, "req res cE: sE: cI: sI: rM: p: q: f:");
+  Options options(argc, argv, "req res cE: sE: cI: sI: cP: sP: rM: p: q: f:");
   int option, ret;
   char buffer[1024];
   BerkeleyDB db;
@@ -293,6 +309,12 @@ int main(int argc, char *argv[]) {
         break;
       case SERVER_IP_ADDRESS:
         serverIPs.push_back(cidrToIPs(options.argument()));
+        break;
+      case CLIENT_PORT:
+        clientPorts.push_back(strtoul(options.argument().c_str(), NULL, 10));
+        break;
+      case SERVER_PORT:
+        serverPorts.push_back(strtoul(options.argument().c_str(), NULL, 10));
         break;
       case REQUEST_METHOD:
         ret = regcomp(&(regexes[0]), options.argument().c_str(), REG_EXTENDED);
