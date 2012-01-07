@@ -23,7 +23,7 @@ mailInterval="1800"				# send e-mail about an IP no more than once per this many
 maxIPs="50000"					# maximum number of IPs for which to keep stats in memory
 timeout="10"					# IP traffic timeout, in seconds
 interface="em0"					# interface to capture offending host traffic on
-numPackets="200"				# number of packets to capture for offensing host
+numPackets="200"				# number of packets to capture for offending host
 
 senderName="PPS Alert"				# name portion of "From" message header
 senderAddress="ppsalert@some.domain"		# SMTP envelope sender and address portion of "From" message header
