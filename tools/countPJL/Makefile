@@ -2,8 +2,8 @@ include ../Makefile.inc
 
 countPJL: ${DEPENDENCIES} countPJL.cpp Makefile
 	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} \
-		-I/usr/local/include/db51 \
-		-L/usr/local/lib/db51 -ldb -o countPJL \
+		-I/usr/local/include/db5 \
+		-L/usr/local/lib/db5 -ldb -o countPJL \
 		countPJL.cpp ${LIBS}
 
 clean:

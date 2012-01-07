@@ -7,7 +7,7 @@ sensor: ${DEPENDENCIES} sensor.cpp Makefile Makefile.sensor
 
 sensor-FreeBSD:
 	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} -ldb -lpcap -lpthread \
-		-L/usr/local/lib -L/usr/local/lib/db51 -o sensor sensor.cpp \
+		-L/usr/local/lib -L/usr/local/lib/db5 -o sensor sensor.cpp \
 		${LIBS}
 
 sensor-linux:

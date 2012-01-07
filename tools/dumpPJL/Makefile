@@ -2,8 +2,8 @@ include ../Makefile.inc
 
 dumpPJL: ${DEPENDENCIES} dumpPJL.cpp Makefile
 	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} \
-		-I/usr/local/include/db51 \
-		-L/usr/local/lib/db51 -ldb -o dumpPJL \
+		-I/usr/local/include/db5 \
+		-L/usr/local/lib/db5 -ldb -o dumpPJL \
 		dumpPJL.cpp ${LIBS}
 
 clean:
