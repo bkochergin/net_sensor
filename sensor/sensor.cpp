@@ -54,9 +54,11 @@ string pidFileName = "/var/run/netSensor.pid";
 Logger logger;
 vector <Module> modules;
 map <string, size_t> moduleIndex;
-pthread_t flushThread;
+pcap_t *pcapDescriptor;
+pthread_t flushThread, statsThread;
 bool capture = true;
-size_t flushInterval;
+uint64_t processedPackets, droppedPackets;
+size_t flushInterval, statsInterval;
 
 void signalHandler(int signal) {
   switch (signal) {
@@ -81,6 +83,54 @@ void *flush(void*) {
   return NULL;
 }
 
+void *stats(void*) {
+  pcap_stat oldPcapStats, pcapStats;
+  uint32_t processedDifference, droppedDifference;
+  uint64_t totalDroppedBPFPackets = 0, oldDroppedPackets = 0;
+  while (capture) {
+    sleep(statsInterval);
+    oldPcapStats = pcapStats;
+    if (pcap_stats(pcapDescriptor, &pcapStats) == -1) {
+      logger.lock();
+      logger << logger.time() << pcap_geterr(pcapDescriptor) << endl;
+      logger.unlock();
+    }
+    if (pcapStats.ps_recv >= oldPcapStats.ps_recv) {
+      processedDifference = pcapStats.ps_recv - oldPcapStats.ps_recv;
+    }
+    else {
+      processedDifference = numeric_limits <uint32_t>::max() - oldPcapStats.ps_recv + pcapStats.ps_recv;
+    }
+    processedPackets += processedDifference;
+    if (pcapStats.ps_drop >= oldPcapStats.ps_drop) {
+      droppedDifference = pcapStats.ps_drop - oldPcapStats.ps_drop;
+    }
+    else {
+      droppedDifference = numeric_limits <uint32_t>::max() - oldPcapStats.ps_drop + pcapStats.ps_drop;
+    }
+    totalDroppedBPFPackets += droppedDifference;
+    logger.lock();
+    logger << logger.time() << "Packets processed: " << processedPackets << endl
+         << "Current packet loss: BPF: " << droppedDifference << " ("
+         << (double)droppedDifference / processedDifference * 100
+         << "%), sensor: " << droppedPackets - oldDroppedPackets << " ("
+         << (double)(droppedPackets - oldDroppedPackets) / processedDifference * 100
+         << "%), total: " << droppedDifference + (droppedPackets - oldDroppedPackets)
+         << " (" << (double)(droppedDifference + (droppedPackets - oldDroppedPackets)) / processedDifference * 100
+         << "%)" << endl << "Total packet loss: BPF: "
+         << totalDroppedBPFPackets << " ("
+         << (double)totalDroppedBPFPackets / processedPackets * 100
+         << "%), sensor: " << droppedPackets << " ("
+         << (double)droppedPackets / processedPackets * 100
+         << "%), total: " << totalDroppedBPFPackets + droppedPackets << " ("
+         << (double)(totalDroppedBPFPackets + droppedPackets) / processedPackets * 100
+         << "%)" << endl << endl;
+    logger.unlock();
+    oldDroppedPackets = droppedPackets;
+  }
+  return NULL;
+}
+
 void cleanup(const pid_t &pid, const std::string &pidFileName) {
   kill(pid, SIGUSR1);
   unlink(pidFileName.c_str());
@@ -92,7 +142,6 @@ int main(int argc, char *argv[]) {
   ofstream pidFile;
   vector <string> moduleNames, dependencies, filters;
   map <string, size_t>::iterator itr;
-  pcap_t *pcapDescriptor;
   char option, errorBuffer[PCAP_ERRBUF_SIZE], cwd[MAXPATHLEN];
   bpf_program bpfProgram;
 #ifdef __FreeBSD__
@@ -159,7 +208,12 @@ int main(int argc, char *argv[]) {
     cerr << argv[0] << ": no flush interval specified" << endl;
     return 1;
   }
+  if (conf.getString("statsInterval") == "") {
+    cerr << argv[0] << ": no stats interval specified" << endl;
+    return 1;
+  }
   flushInterval = conf.getNumber("flushInterval");
+  statsInterval = conf.getNumber("statsInterval");
   moduleNames = explode(conf.getString("modules"));
   /* Load modules. */
   for (size_t i = 0; i < moduleNames.size(); ++i) {
@@ -295,6 +349,12 @@ int main(int argc, char *argv[]) {
     cerr << argv[0] << ": pthread_create(): " << strerror(error) << endl;
     return 1;
   }
+  /* Start stats() thread. */
+  error = pthread_create(&statsThread, NULL, &stats, NULL);
+  if (error != 0) {
+    cerr << argv[0] << ": pthread_create(): " << strerror(error) << endl;
+    return 1;
+  }
   /*
    * If we are not given an absolute path to the PID file, form an absolute
    * path by prepending the current working directory to it, so that we can
@@ -354,7 +414,8 @@ int main(int argc, char *argv[]) {
    * call each interested module's processPacket() function with it.
    */
   while (capture == true) {
-    if ((pcapPacket = pcap_next(pcapDescriptor, &pcapHeader)) != NULL) {
+    if ((pcapPacket = pcap_next(pcapDescriptor, &pcapHeader)) != NULL) { 
+      ++processedPackets;
       if (packet.initialize(pcapHeader, pcapPacket) == true) {
         for (size_t i = 0; i < modules.size(); ++i) {
           if (modules[i].processPacket != NULL &&
