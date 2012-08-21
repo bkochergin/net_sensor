@@ -78,9 +78,9 @@ static const string pad(const string _string, size_t length) {
   return _string;
 }
 
-/* Converts HTTP tracker session to human-readable form for e-mail. */
+/* Converts HTTP session to human-readable form for e-mail. */
 static void printHTTP(const HTTPSession &session, ostringstream &message) {
-  message << "HTTP tracker session:" << endl;
+  message << "HTTP session:" << endl;
   for (size_t i = 0; i < session.requests.size(); ++i) {
     message << endl << "Message type:\t\t\trequest" << endl;
     message << "Time:\t\t\t\t" << session.requests[i].time.string() << endl;
