@@ -1,9 +1,9 @@
 include ../Makefile.inc
 
 httpLog.so: httpLog.cpp Makefile
-	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC ${INCLUDES} \
-		-I/usr/local/include/db5 -c httpLog.cpp
-	${CXX} ${CXXFLAGS} -Wall -Wextra -shared -ldb -L/usr/local/lib/db5 \
+	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC ${INCLUDES} -I${DB_INCLUDES} \
+		-c httpLog.cpp
+	${CXX} ${CXXFLAGS} -Wall -Wextra -shared -ldb -L${DB_LIBS} \
 		-o httpLog.so httpLog.o ${LIBS}
 
 clean:

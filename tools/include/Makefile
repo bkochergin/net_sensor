@@ -5,7 +5,7 @@ all: berkeleyDB.o options.o
 
 berkeleyDB.o: berkeleyDB.h berkeleyDB.cpp Makefile
 	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC -c ${INCLUDES} \
-		-I/usr/local/include/db5 berkeleyDB.cpp
+		-I${DB_INCLUDES} berkeleyDB.cpp
 
 options.o: ${DEPENDENCIES} options.h options.cpp Makefile
 	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC -c ${INCLUDES} -c options.cpp

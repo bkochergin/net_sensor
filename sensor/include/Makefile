@@ -1,3 +1,5 @@
+include ../../Makefile.inc
+
 DEPENDENCIES=../../shared/include/*
 INCLUDES=-I../../shared -I..
 
@@ -7,8 +9,8 @@ all: berkeleyDB.o configuration.o endian.o ethernetInfo.o flowID.o \
 	ar rcs ../lib/sensor.a *.o
 
 berkeleyDB.o: berkeleyDB.h berkeleyDB.cpp Makefile
-	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC -I/usr/local/include/db5 \
-		-I/opt/local/include/db44 -c -o berkeleyDB.o berkeleyDB.cpp
+	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC -I${DB_INCLUDES} \
+		-c -o berkeleyDB.o berkeleyDB.cpp
 
 configuration.o: configuration.h configuration.cpp Makefile
 	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC -c -o configuration.o \

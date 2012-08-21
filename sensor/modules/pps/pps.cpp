@@ -56,8 +56,7 @@ using namespace std;
 using namespace tr1;
 
 /*
- * A prefix tree of internal networks whose IPv4s addresses we'll be
- * monitoring.
+ * A prefix tree of internal networks whose IPv4 addresses we'll be
  */
 map <uint32_t, uint32_t> networks;
 /*

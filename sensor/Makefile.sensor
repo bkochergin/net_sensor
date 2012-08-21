@@ -1,3 +1,5 @@
+include ../Makefile.inc
+
 DEPENDENCIES=../shared/include/* include/*
 INCLUDES=-I../shared -I.
 LIBS=lib/sensor.a ../shared/lib/shared.a
@@ -7,8 +9,7 @@ sensor: ${DEPENDENCIES} sensor.cpp Makefile Makefile.sensor
 
 sensor-FreeBSD:
 	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} -ldb -lpcap -lpthread \
-		-L/usr/local/lib -L/usr/local/lib/db5 -o sensor sensor.cpp \
-		${LIBS}
+		-L${DB_LIBS} -o sensor sensor.cpp ${LIBS}
 
 sensor-linux:
 	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} -ldb -ldl -lpcap \
