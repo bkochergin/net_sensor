@@ -234,14 +234,19 @@ void print(const char *data) {
           if (messages[i].message[3].length() > 0) {
             cout << "Fragment:\t\t\t" << messages[i].message[3] << endl;
           }
-          cout << "Protocol version:\t\tHTTP/" << messages[i].message[4] << endl;
+          if (messages[i].message[4].size() == 0) {
+          }
+          else {
+            cout << "Protocol version:\t\tHTTP/" << messages[i].message[4] << endl;
+          }
           break;
         case HTTP_RESPONSE:
-          if (messages.size() == 0) {
-            cerr << "danger!" << endl;
+          if (messages[i].message.size() == 0 || messages[i].message[0].size() == 0) {
           }
-          cout << "Protocol version:\t\tHTTP/" << messages[i].message[0] << endl;
-          cout << "Response code:\t\t\t" << messages[i].message[1] << endl;
+          else {
+            cout << "Protocol version:\t\tHTTP/" << messages[i].message[0] << endl;
+            cout << "Response code:\t\t\t" << messages[i].message[1] << endl;
+          }
           break;
       }
       if (messages[i].headers.size() > 0) {
