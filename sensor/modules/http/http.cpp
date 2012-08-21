@@ -99,20 +99,20 @@ static int path(http_parser *parser __attribute__((unused)), const char *path,
                                               _packet -> time()));
   }
   /* Record request path. */
-  session -> requests.rbegin() -> message[1] = string(path, length);
+  session -> requests.rbegin() -> message[1].append(path, length);
   session -> requestState = PATH_STATE;
   return 0;
 }
 
 static int queryString(http_parser *parser __attribute__((unused)),
                        const char *queryString, size_t length) {
-  session -> requests.rbegin() -> message[2] = string(queryString, length);
+  session -> requests.rbegin() -> message[2].append(queryString, length);
   return 0;
 }
 
 static int fragment(http_parser *parser __attribute__((unused)),
                     const char *fragment, size_t length) {
-  session -> requests.rbegin() -> message[3] = string(fragment, length);
+  session -> requests.rbegin() -> message[3].append(fragment, length);
   return 0;
 }
 
@@ -422,6 +422,13 @@ extern "C" {
     static unordered_map <string, shared_ptr <HTTPSession> >::local_iterator localItr;
     static vector <pair <string, shared_ptr <HTTPSession> > > erase;
     _time = time(NULL);
+
+          logger -> lock();
+          (*logger) << logger -> time()
+                    << "HTTP module: session table:" << sessions.size() << endl;
+          logger -> unlock();
+
+
     /*
      * To avoid cluttering the log, only warn about the session table being
      * full a maximum of once per flush() call.
