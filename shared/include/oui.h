@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2012 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -22,8 +22,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ETHERNET_INFO_H
-#define ETHERNET_INFO_H
+#ifndef OUI_H
+#define OUI_H
 
 #include <cerrno>
 #include <climits>
@@ -36,10 +36,10 @@
 
 #include <arpa/inet.h>
 
-class EthernetInfo {
+class OUI {
   public:
-    EthernetInfo();
-    EthernetInfo(const std::string fileName);
+    OUI();
+    OUI(const std::string fileName);
     bool initialize(const std::string fileName);
     operator bool() const;
     const std::string &error();

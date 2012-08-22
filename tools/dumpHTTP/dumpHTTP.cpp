@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Boris Kochergin. All rights reserved.
+ * Copyright 2012 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -38,7 +38,10 @@
 
 #include <include/address.h>
 #include <include/berkeleyDB.h>
+#include <include/configuration.h>
+#include <include/country.h>
 #include <include/options.h>
+#include <include/oui.h>
 #include <include/timeStamp.h>
 
 #include "message.hpp"
@@ -46,16 +49,25 @@
 using namespace std;
 
 /* Available command-line options. */
-enum { REQUESTS, RESPONSES, CLIENT_ETHERNET_ADDRESS, SERVER_ETHERNET_ADDRESS,
-       CLIENT_IP_ADDRESS, SERVER_IP_ADDRESS, CLIENT_PORT, SERVER_PORT,
-       REQUEST_METHOD, PATH, QUERY_STRING, FRAGMENT };
+enum { OPT_CONFIG, OPT_REQUESTS, OPT_RESPONSES, OPT_CLIENT_ETHERNET_ADDRESS,
+       OPT_SERVER_ETHERNET_ADDRESS, OPT_OUI, OPT_CLIENT_OUI, OPT_SERVER_OUI,
+       OPT_CLIENT_IP_ADDRESS, OPT_SERVER_IP_ADDRESS, OPT_COUNTRY,
+       OPT_CLIENT_COUNTRY, OPT_SERVER_COUNTRY, OPT_CLIENT_PORT,
+       OPT_SERVER_PORT, OPT_REQUEST_METHOD, OPT_PATH, OPT_QUERY_STRING,
+       OPT_FRAGMENT };
 
-bool printRequests = true, printResponses = true, checkRequestType,
-     checkPath = false, checkQueryString = false, checkFragment = false;
+bool printRequests = true, printResponses = true, printOUI = false,
+     checkClientOUI = false, checkServerOUI = false, printCountry = false,
+     checkClientCountry = false, checkServerCountry = false,
+     checkRequestType = false, checkPath = false, checkQueryString = false,
+     checkFragment = false;
 vector <string> clientMACs, serverMACs;
+OUI oui;
 vector <pair <uint32_t, uint32_t> > clientIPs, serverIPs;
+Country country;
 vector <uint16_t> clientPorts, serverPorts;
-regex_t regexes[5];
+regex_t clientOUIRegex, serverOUIRegex, clientCountryRegex, serverCountryRegex,
+        requestMethodRegex, pathRegex, queryStringRegex, fragmentRegex;
 
 string pad(const string _string, size_t length) {
   if (_string.length() < length * 8) {
@@ -72,6 +84,7 @@ void print(const char *data) {
   static vector <HTTPMessage> messages;
   static size_t position;
   static bool match;
+  static string clientOUI, serverOUI, clientCountry, serverCountry;
   clientMAC = data + 1;
   serverMAC = data + 7;
   clientIP = (uint32_t*)(data + 13);
@@ -104,6 +117,26 @@ void print(const char *data) {
       return;
     }
   }
+  if (printOUI == true) {
+    clientOUI = oui.find(clientMAC);
+    /* Match client Ethernet OUI. */
+    if (checkClientOUI == true && regexec(&clientOUIRegex, clientOUI.c_str(),
+                                          0, NULL, 0) == REG_NOMATCH) {
+      return;
+    }
+    if (clientOUI == "") {
+      clientOUI = "unknown";
+    }
+    serverOUI = oui.find(serverMAC);
+    /* Match server Ethernet OUI. */
+    if (checkServerOUI == true && regexec(&serverOUIRegex, serverOUI.c_str(),
+                                          0, NULL, 0) == REG_NOMATCH) {
+      return;
+    }
+    if (serverOUI == "") {
+      serverOUI = "unknown";
+    }
+  }
   /* Match client IPv4 addresses. */
   if (clientIPs.size() > 0) {
     ip = ntohl(*clientIP);
@@ -130,6 +163,28 @@ void print(const char *data) {
     } 
     if (match == false) {
       return;
+    }
+  }
+  if (printCountry == true) {
+    clientCountry = country.find(ntohl(*clientIP));
+    /* Match client country. */
+    if (checkClientCountry == true && regexec(&clientCountryRegex,
+                                              clientCountry.c_str(),
+                                              0, NULL, 0) == REG_NOMATCH) {
+      return;
+    }
+    if (clientCountry == "") {
+      clientCountry = "unknown";
+    }
+    serverCountry = country.find(ntohl(*serverIP));
+    /* Match server country. */
+    if (checkServerCountry == true && regexec(&serverCountryRegex,
+                                              serverCountry.c_str(),
+                                              0, NULL, 0) == REG_NOMATCH) {
+      return;
+    }
+    if (serverCountry == "") {
+      serverCountry = "unknown";
     }
   }
   /* Match client port. */
@@ -169,25 +224,25 @@ void print(const char *data) {
     }
     /* Match request method regular expression. */
     if (messages[i].type == HTTP_REQUEST && checkRequestType == true &&
-        regexec(&(regexes[0]), messages[i].message[0].c_str(), 0, NULL,
+        regexec(&requestMethodRegex, messages[i].message[0].c_str(), 0, NULL,
                 0) == REG_NOMATCH) {
       messages[i].print = false;
     }
     /* Match path regular expression. */
     if (messages[i].type == HTTP_REQUEST && checkPath == true &&
-        regexec(&(regexes[1]), messages[i].message[1].c_str(), 0, NULL,
+        regexec(&pathRegex, messages[i].message[1].c_str(), 0, NULL,
                 0) == REG_NOMATCH) {
       messages[i].print = false;
     }
     /* Match query string regular expression. */
     if (messages[i].type == HTTP_REQUEST && checkQueryString == true &&
-        regexec(&(regexes[2]), messages[i].message[2].c_str(), 0, NULL,
+        regexec(&queryStringRegex, messages[i].message[2].c_str(), 0, NULL,
                 0) == REG_NOMATCH) {
       messages[i].print = false;
     }
     /* Match fragment regular expression. */
     if (messages[i].type == HTTP_REQUEST && checkFragment == true &&
-        regexec(&(regexes[3]), messages[i].message[3].c_str(), 0, NULL,
+        regexec(&fragmentRegex, messages[i].message[3].c_str(), 0, NULL,
                 0) == REG_NOMATCH) {
       messages[i].print = false;
     }
@@ -219,10 +274,22 @@ void print(const char *data) {
       cout << endl;
       cout << "Time:\t\t\t\t" << messages[i].time.string() << endl;
       cout << "Client Ethernet address:\t" << textMAC(clientMAC) << endl;
+      if (printOUI == true) {
+        cout << "Client Ethernet OUI:\t\t" << clientOUI << endl;
+      }
       cout << "Client IPv4 address:\t\t" << textIP(*clientIP) << endl;
+      if (printCountry == true) {
+        cout << "Client country:\t\t\t" << clientCountry << endl;
+      }
       cout << "Client port:\t\t\t" << ntohs(*clientPort) << endl;
-      cout << "Server ethernet address:\t" << textMAC(serverMAC) << endl;
+      cout << "Server Ethernet address:\t" << textMAC(serverMAC) << endl;
+      if (printOUI == true) {
+        cout << "Server Ethernet OUI:\t\t" << serverOUI << endl;
+      }
       cout << "Server IPv4 address:\t\t" << textIP(*serverIP) << endl;
+      if (printCountry == true) {
+        cout << "Server country:\t\t\t" << serverCountry << endl;
+      }
       cout << "Server port:\t\t\t" << ntohs(*serverPort) << endl;
       switch (messages[i].type) {
         case HTTP_REQUEST:
@@ -234,16 +301,12 @@ void print(const char *data) {
           if (messages[i].message[3].length() > 0) {
             cout << "Fragment:\t\t\t" << messages[i].message[3] << endl;
           }
-          if (messages[i].message[4].size() == 0) {
-          }
-          else {
+          if (messages[i].message[4].size() > 0) {
             cout << "Protocol version:\t\tHTTP/" << messages[i].message[4] << endl;
           }
           break;
         case HTTP_RESPONSE:
-          if (messages[i].message.size() == 0 || messages[i].message[0].size() == 0) {
-          }
-          else {
+          if (messages[i].message.size() > 0 && messages[i].message[0].size() > 0) {
             cout << "Protocol version:\t\tHTTP/" << messages[i].message[0] << endl;
             cout << "Response code:\t\t\t" << messages[i].message[1] << endl;
           }
@@ -262,16 +325,22 @@ void print(const char *data) {
 }
 
 void usage(const char *program) {
-  cerr << "usage: " << program << " [-req|-res] [-cE client Ethernet address] "
-       << "[-sE server Ethernet address] [-cI client IPv4 address (CIDR)] "
-       << "[-sI server IPv4 address (CIDR)] [-cP client port] "
-       << "[-sP server port] [-rM request method] [-p path] [-q query string] "
-       << "[-f fragment] file ..." << endl;
+  cerr << "usage: " << program << " [-c file] [-req|-res] "
+       << "[-cE client Ethernet address] [-sE server Ethernet address] [-oui] "
+       << "[-cOUI client OUI] [-sOUI server OUI] "
+       << "[-cI client IPv4 address (CIDR)] [-sI server IPv4 address (CIDR)] "
+       << "[-country] [-cCountry country] [-sCountry country] "
+       << "[-cP client port] [-sP server port] [-rM request method] [-p path] "
+       << "[-q query string] [-f fragment] file ..." << endl;
 }
 
 int main(int argc, char *argv[]) {
-  Options options(argc, argv, "req res cE: sE: cI: sI: cP: sP: rM: p: q: f:");
+  Options options(argc, argv, "c req res cE: sE: oui cOUI: sOUI: cI: sI: " \
+                              "country cCountry: sCountry cP: sP: rM: p: " \
+                              "q: f:");
   int option, ret;
+  string configFile = "dumpHTTP.conf";
+  Configuration conf;
   char buffer[1024];
   BerkeleyDB db;
   DBT key, data;
@@ -287,7 +356,10 @@ int main(int argc, char *argv[]) {
       return 1;
     }
     switch (option) {
-      case REQUESTS:
+      case OPT_CONFIG:
+        configFile = options.argument();
+        break;
+      case OPT_REQUESTS:
         if (printRequests == false) {
           cerr << argv[0] << ": " << "the \"-req\" and \"-resp\" options are "
                << "mutually-exclusive" << endl;
@@ -295,7 +367,7 @@ int main(int argc, char *argv[]) {
         }
         printResponses = false;
         break;
-      case RESPONSES:
+      case OPT_RESPONSES:
         if (printResponses == false) {
           cerr << argv[0] << ": " << "the \"-req\" and \"-resp\" options are "
                << "mutually-exclusive" << endl;
@@ -303,55 +375,104 @@ int main(int argc, char *argv[]) {
         }
         printRequests = false;
         break;
-      case CLIENT_ETHERNET_ADDRESS:
+      case OPT_CLIENT_ETHERNET_ADDRESS:
         clientMACs.push_back(binaryMAC(options.argument()));
         break;
-      case SERVER_ETHERNET_ADDRESS:
+      case OPT_SERVER_ETHERNET_ADDRESS:
         serverMACs.push_back(binaryMAC(options.argument()));
         break;
-      case CLIENT_IP_ADDRESS:
+      case OPT_OUI:
+        printOUI = true;
+        break;
+      case OPT_CLIENT_OUI:
+        ret = regcomp(&clientOUIRegex, options.argument().c_str(),
+                      REG_EXTENDED);
+        if (ret != 0) {
+          regerror(ret, &clientOUIRegex, buffer, sizeof(buffer));
+          cerr << argv[0] << ": regcomp(): " << buffer << endl;
+          return 1;
+        }
+        checkClientOUI = true;
+        break;
+      case OPT_SERVER_OUI:
+        ret = regcomp(&serverOUIRegex, options.argument().c_str(),
+                      REG_EXTENDED);
+        if (ret != 0) {
+          regerror(ret, &serverOUIRegex, buffer, sizeof(buffer));
+          cerr << argv[0] << ": regcomp(): " << buffer << endl;
+          return 1;
+        }
+        checkServerOUI = true;
+        break;
+      case OPT_CLIENT_IP_ADDRESS:
         clientIPs.push_back(cidrToIPs(options.argument()));
         break;
-      case SERVER_IP_ADDRESS:
+      case OPT_SERVER_IP_ADDRESS:
         serverIPs.push_back(cidrToIPs(options.argument()));
         break;
-      case CLIENT_PORT:
+      case OPT_COUNTRY:
+        printCountry = true;
+        break;
+      case OPT_CLIENT_COUNTRY:
+        ret = regcomp(&clientCountryRegex, options.argument().c_str(),
+                      REG_EXTENDED);
+        if (ret != 0) {
+          regerror(ret, &clientCountryRegex, buffer, sizeof(buffer));
+          cerr << argv[0] << ": regcomp(): " << buffer << endl;
+          return 1;
+        }
+        checkClientCountry = true;
+        break;
+      case OPT_SERVER_COUNTRY:
+        ret = regcomp(&serverCountryRegex, options.argument().c_str(),
+                      REG_EXTENDED);
+        if (ret != 0) {
+          regerror(ret, &serverCountryRegex, buffer, sizeof(buffer));
+          cerr << argv[0] << ": regcomp(): " << buffer << endl;
+          return 1;
+        }
+        checkServerCountry = true;
+        break;
+      case OPT_CLIENT_PORT:
         clientPorts.push_back(strtoul(options.argument().c_str(), NULL, 10));
         break;
-      case SERVER_PORT:
+      case OPT_SERVER_PORT:
         serverPorts.push_back(strtoul(options.argument().c_str(), NULL, 10));
         break;
-      case REQUEST_METHOD:
-        ret = regcomp(&(regexes[0]), options.argument().c_str(), REG_EXTENDED);
+      case OPT_REQUEST_METHOD:
+        ret = regcomp(&requestMethodRegex, options.argument().c_str(),
+                      REG_EXTENDED);
         if (ret != 0) {
-          regerror(ret, &(regexes[0]), buffer, sizeof(buffer));
+          regerror(ret, &requestMethodRegex, buffer, sizeof(buffer));
           cerr << argv[0] << ": regcomp(): " << buffer << endl;
           return 1;
         }
         checkRequestType = true;
         break;
-      case PATH:
-        ret = regcomp(&(regexes[1]), options.argument().c_str(), REG_EXTENDED);
+      case OPT_PATH:
+        ret = regcomp(&pathRegex, options.argument().c_str(), REG_EXTENDED);
         if (ret != 0) {
-          regerror(ret, &(regexes[1]), buffer, sizeof(buffer));
+          regerror(ret, &pathRegex, buffer, sizeof(buffer));
           cerr << argv[0] << ": regcomp(): " << buffer << endl;
           return 1;
         }
         checkPath = true;
         break;
-      case QUERY_STRING:
-        ret = regcomp(&(regexes[2]), options.argument().c_str(), REG_EXTENDED);
+      case OPT_QUERY_STRING:
+        ret = regcomp(&queryStringRegex, options.argument().c_str(),
+                      REG_EXTENDED);
         if (ret != 0) {
-          regerror(ret, &(regexes[2]), buffer, sizeof(buffer));
+          regerror(ret, &queryStringRegex, buffer, sizeof(buffer));
           cerr << argv[0] << ": regcomp(): " << buffer << endl;
           return 1;
         }
         checkQueryString = true;
         break;
-      case FRAGMENT:
-        ret = regcomp(&(regexes[3]), options.argument().c_str(), REG_EXTENDED);
+      case OPT_FRAGMENT:
+        ret = regcomp(&fragmentRegex, options.argument().c_str(),
+                      REG_EXTENDED);
         if (ret != 0) {
-          regerror(ret, &(regexes[3]), buffer, sizeof(buffer));
+          regerror(ret, &fragmentRegex, buffer, sizeof(buffer));
           cerr << argv[0] << ": regcomp(): " << buffer << endl;
           return 1;
         }
@@ -362,6 +483,23 @@ int main(int argc, char *argv[]) {
   if (options.index() == argc) {
     usage(argv[0]);
     return 1;
+  }
+  if (!conf.initialize(configFile)) {
+    cerr << argv[0] << ": " << conf.error() << endl;
+    return 1;
+  }
+  if (printOUI == true) {
+    if (oui.initialize(conf.getString("oui")) == false) {
+      cerr << argv[0] << ": " << oui.error() << endl;
+      return 1;
+    }
+  }
+  if (printCountry == true) {
+    if (country.initialize(conf.getStrings("countryAllocation"),
+                           conf.getString("countryNames")) == false) {
+      cerr << argv[0] << ": " << country.error() << endl;
+      return 1;
+    }
   }
   for (int i = options.index(); i < argc; ++i) {
     if (access(argv[i], R_OK) != 0) {

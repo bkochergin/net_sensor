@@ -3,25 +3,16 @@ include ../../Makefile.inc
 DEPENDENCIES=../../shared/include/*
 INCLUDES=-I../../shared -I..
 
-all: berkeleyDB.o configuration.o endian.o ethernetInfo.o flowID.o \
-		httpParser.o httpSession.o logger.o module.o packet.o smtp.o \
-		Makefile
+all: berkeleyDB.o endian.o flowID.o httpParser.o httpSession.o logger.o \
+		module.o packet.o smtp.o Makefile
 	ar rcs ../lib/sensor.a *.o
 
 berkeleyDB.o: berkeleyDB.h berkeleyDB.cpp Makefile
 	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC -I${DB_INCLUDES} \
 		-c -o berkeleyDB.o berkeleyDB.cpp
 
-configuration.o: configuration.h configuration.cpp Makefile
-	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC -c -o configuration.o \
-		configuration.cpp
-
 endian.o: endian.h endian.cpp Makefile
 	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC -c -o endian.o endian.cpp
-
-ethernetInfo.o: ethernetInfo.h ethernetInfo.cpp Makefile
-	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC -c -o ethernetInfo.o \
-		ethernetInfo.cpp
 
 flowID.o: ${DEPENDENCIES} flowID.h flowID.cpp Makefile
 	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC -c ${INCLUDES} -o flowID.o \

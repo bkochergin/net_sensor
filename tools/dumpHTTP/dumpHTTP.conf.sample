@@ -1,0 +1,7 @@
+oui="/usr/local/share/netSensor/oui.txt"
+countryAllocation="/usr/local/share/netSensor/delegated-afrinic-latest"
+countryAllocation="/usr/local/share/netSensor/delegated-apnic-latest"
+countryAllocation="/usr/local/share/netSensor/delegated-arin-latest"
+countryAllocation="/usr/local/share/netSensor/delegated-lacnic-latest"
+countryAllocation="/usr/local/share/netSensor/delegated-ripencc-latest"
+countryNames="/usr/local/share/netSensor/iso3166"

@@ -422,13 +422,10 @@ extern "C" {
     static unordered_map <string, shared_ptr <HTTPSession> >::local_iterator localItr;
     static vector <pair <string, shared_ptr <HTTPSession> > > erase;
     _time = time(NULL);
-
-          logger -> lock();
-          (*logger) << logger -> time()
-                    << "HTTP module: session table:" << sessions.size() << endl;
-          logger -> unlock();
-
-
+    logger -> lock();
+    (*logger) << logger -> time()
+              << "HTTP module: session table:" << sessions.size() << endl;
+    logger -> unlock();
     /*
      * To avoid cluttering the log, only warn about the session table being
      * full a maximum of once per flush() call.
