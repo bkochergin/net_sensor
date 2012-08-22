@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2012 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -66,7 +66,7 @@ void signalHandler(int signal) {
       break;
     case SIGTERM:
       logger.lock();
-      logger << logger.time() << "Caught SIGTERM; exiting." << endl;
+      logger << logger.time() << "Sensor: caught SIGTERM; exiting." << endl;
       logger.unlock();
       capture = false;
       break;
@@ -92,12 +92,14 @@ void *stats(void*) {
     oldPcapStats = pcapStats;
     if (pcap_stats(pcapDescriptor, &pcapStats) == -1) {
       logger.lock();
-      logger << logger.time() << pcap_geterr(pcapDescriptor) << endl;
+      logger << logger.time() << "Sensor: " << pcap_geterr(pcapDescriptor)
+             << endl;
       logger.unlock();
     }
     if (pcapStats.ps_recv >= oldPcapStats.ps_recv) {
       processedDifference = pcapStats.ps_recv - oldPcapStats.ps_recv;
     }
+    /* Handle wraparound for 32-bit members of the pcap_stat structure. */
     else {
       processedDifference = numeric_limits <uint32_t>::max() - oldPcapStats.ps_recv + pcapStats.ps_recv;
     }
@@ -110,21 +112,17 @@ void *stats(void*) {
     }
     totalDroppedBPFPackets += droppedDifference;
     logger.lock();
-    logger << logger.time() << "Packets processed: " << processedPackets << endl
-         << "Current packet loss: BPF: " << droppedDifference << " ("
-         << (double)droppedDifference / processedDifference * 100
-         << "%), sensor: " << droppedPackets - oldDroppedPackets << " ("
-         << (double)(droppedPackets - oldDroppedPackets) / processedDifference * 100
-         << "%), total: " << droppedDifference + (droppedPackets - oldDroppedPackets)
-         << " (" << (double)(droppedDifference + (droppedPackets - oldDroppedPackets)) / processedDifference * 100
-         << "%)" << endl << "Total packet loss: BPF: "
+    logger << logger.time() << "Sensor: stats: packets processed: " << processedPackets << endl
+         << logger.time() << "Sensor: stats: current packet loss: " << droppedDifference
+         << " (" << (double)(droppedDifference / processedDifference) * 100
+         << "%)" << endl << logger.time() << "Sensor: stats: total packet loss: "
          << totalDroppedBPFPackets << " ("
          << (double)totalDroppedBPFPackets / processedPackets * 100
          << "%), sensor: " << droppedPackets << " ("
          << (double)droppedPackets / processedPackets * 100
          << "%), total: " << totalDroppedBPFPackets + droppedPackets << " ("
-         << (double)(totalDroppedBPFPackets + droppedPackets) / processedPackets * 100
-         << "%)" << endl << endl;
+         << (double)(totalDroppedBPFPackets) / processedPackets * 100
+         << "%)" << endl;
     logger.unlock();
     oldDroppedPackets = droppedPackets;
   }
@@ -431,7 +429,7 @@ int main(int argc, char *argv[]) {
   error = pthread_join(flushThread, NULL);
   if (error != 0) {
     logger.lock();
-    logger << logger.time() << "pthread_join(): " << strerror(error)
+    logger << logger.time() << "Sensor: pthread_join(): " << strerror(error)
            << "; exiting." << endl;
     logger.unlock();
     unlink(pidFileName.c_str());
