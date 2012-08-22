@@ -142,9 +142,6 @@ int main(int argc, char *argv[]) {
   map <string, size_t>::iterator itr;
   char option, errorBuffer[PCAP_ERRBUF_SIZE], cwd[MAXPATHLEN];
   bpf_program bpfProgram;
-#ifdef __FreeBSD__
-  u_int immediate = 1;
-#endif
   sigset_t mask;
   pid_t pid;
   pthread_t flushThread;
@@ -308,13 +305,6 @@ int main(int argc, char *argv[]) {
          << endl;
     return 1;
   }
-/* If running on FreeBSD, put the BPF device into immediate mode. */
-#ifdef __FreeBSD__
-    if (ioctl(pcap_fileno(pcapDescriptor), BIOCIMMEDIATE, &immediate) == -1) {
-      cerr << argv[0] << ": ioctl(): " << strerror(errno) << endl;
-      return 1;
-    }
-#endif
   if (sigfillset(&mask) == -1) {
     cerr << argv[0] << ": sigfillset(): " << strerror(errno) << endl;
     return 1;
