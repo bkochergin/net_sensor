@@ -30,6 +30,8 @@
 #include <tr1/unordered_map>
 #include <vector>
 
+#include <stdint.h>
+
 class Country {
   public:
     Country();

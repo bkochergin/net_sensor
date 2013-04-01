@@ -5,7 +5,7 @@ maxSessions="1000"				# maximum number of UDP tracker sessions to keep in memory
 timeout="10"					# UDP tracker session timeout, in seconds
 
 senderName="BitTorrent Alert"			# name portion of "From" message header
-senderAddress="btalert@some.domain		# SMTP envelope sender and address portion of "From" message header
+senderAddress="btalert@some.domain"		# SMTP envelope sender and address portion of "From" message header
 
 recipient="user1@some.other.domain"		# e-mail address to send notifications to (multiple allowed)
 recipient="user2@yet.another.domain"

@@ -22,6 +22,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cstring>
+
 #include <algorithm>
 
 #include "dns.h"
