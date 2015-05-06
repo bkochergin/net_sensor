@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2007-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,6 @@
 #include <climits>
 #include <cstdlib>
 #include <cstring>
-
 #include <fstream>
 #include <limits>
 #include <map>
@@ -48,7 +47,7 @@ class Configuration {
     const std::vector <std::string> &getStrings(const std::string) const;
     size_t getNumber(const std::string) const;
   private:
-    std::map <std::string, std::vector <std::string> > options;
+    std::map <std::string, std::vector <std::string>> options;
     std::string _fileName;
     bool _error;
     std::string errorMessage;

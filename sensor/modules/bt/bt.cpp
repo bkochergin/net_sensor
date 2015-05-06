@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Boris Kochergin. All rights reserved.
+ * Copyright 2011-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,13 +28,12 @@
 #include <cerrno>
 #include <cstring>
 #include <ctime>
-
 #include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <tr1/memory>
-#include <tr1/unordered_map>
+#include <memory>
+#include <unordered_map>
 
 #include <include/address.h>
 #include <include/configuration.h>
@@ -49,14 +48,13 @@
 #include "udpTrackerSession.h"
 
 using namespace std;
-using namespace tr1;
 
 /*
  * The session table is a hash table of shared pointers to UDPTrackerSession
  * classes with flow IDs as keys.
  */
-static unordered_map <string, shared_ptr <UDPTrackerSession> > sessions;
-static unordered_map <string, shared_ptr <UDPTrackerSession> >::iterator sessionItr;
+static unordered_map <string, shared_ptr <UDPTrackerSession>> sessions;
+static unordered_map <string, shared_ptr <UDPTrackerSession>>::iterator sessionItr;
 static shared_ptr <UDPTrackerSession> session;
 /* Session memory allocator. */
 static Memory <UDPTrackerSession> memory;
@@ -295,13 +293,13 @@ extern "C" {
      * allocate one mutex per bucket.
      */
     locks = new(nothrow) pthread_mutex_t[sessions.bucket_count()];
-    if (locks == NULL) {
+    if (locks == nullptr) {
       error = "malloc(): ";
       error += strerror(errno);
       return 1;
     }
     for (size_t i = 0; i < sessions.bucket_count(); ++i) {
-      _error = pthread_mutex_init(&(locks[i]), NULL);
+      _error = pthread_mutex_init(&(locks[i]), nullptr);
       if (_error != 0) {
         error = "pthread_mutex_init(): ";
         error += strerror(_error);
@@ -512,9 +510,9 @@ extern "C" {
 
   int flush() {
     static time_t _time;
-    static unordered_map <string, shared_ptr <UDPTrackerSession> >::local_iterator localItr;
+    static unordered_map <string, shared_ptr <UDPTrackerSession>>::local_iterator localItr;
     static vector <string> erase;
-    _time = time(NULL);
+    _time = time(nullptr);
     if (sessions.size() > 0) {
       for (size_t i = 0; i < sessions.bucket_count(); ++i) {
         /*

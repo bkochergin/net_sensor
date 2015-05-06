@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,10 +29,9 @@
 #include <climits>
 #include <cstdlib>
 #include <cstring>
-
 #include <fstream>
 #include <string>
-#include <tr1/unordered_map>
+#include <unordered_map>
 
 #include <arpa/inet.h>
 
@@ -46,8 +45,8 @@ class OUI {
     const std::string &find(const std::string oui);
     const std::string &find(const char *oui);
   private:
-    std::tr1::unordered_map <std::string, std::string> ouiMap;
-    std::tr1::unordered_map <std::string, std::string>::const_iterator ouiItr;
+    std::unordered_map <std::string, std::string> ouiMap;
+    std::unordered_map <std::string, std::string>::const_iterator ouiItr;
     std::string _oui;
     std::string empty;
     std::string multicast;

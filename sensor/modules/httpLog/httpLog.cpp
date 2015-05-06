@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,7 +24,7 @@
 
 #include <string>
 #include <vector>
-#include <tr1/memory>
+#include <memory>
 
 #include <include/configuration.h>
 #include <include/httpSession.h>
@@ -32,7 +32,6 @@
 #include <include/writer.hpp>
 
 using namespace std;
-using namespace tr1;
 
 static uint32_t timeout;
 static Writer <HTTPSession> writer;

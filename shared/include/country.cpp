@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Boris Kochergin. All rights reserved.
+ * Copyright 2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -71,7 +71,7 @@ bool Country::initialize(const std::vector <std::string> &allocations,
       fields = explode(line, "|");
       if (fields.size() == 7 && fields[2] == "ipv4" && fields[1] != "*") {
         firstIP = ntohl(binaryIP(fields[3]));
-        lastIP = firstIP + strtoul(fields[4].c_str(), NULL, 10);
+        lastIP = firstIP + strtoul(fields[4].c_str(), nullptr, 10);
         countryMap.insert(std::make_pair(firstIP, _Country(lastIP,
                                                            fields[1])));
       }

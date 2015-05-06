@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2009-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -34,7 +34,7 @@ bool SMTP::initialize(const std::string &server, const size_t auth,
                       const std::string &senderName,
                       const std::string &senderAddress,
                       const std::vector <std::string> &recipients) {
-  int error = pthread_mutex_init(&mutex, NULL);
+  int error = pthread_mutex_init(&mutex, nullptr);
   if (error != 0) {
     errorMessage = "SMTP::initialize(): pthread_mutex_init(): ";
     errorMessage += strerror(error);
@@ -67,20 +67,20 @@ std::ostringstream &SMTP::message() {
 }
 
 bool SMTP::send() {
-  smtp_session_t session = NULL;
+  smtp_session_t session = nullptr;
   smtp_message_t _message;
   smtp_recipient_t __recipients;
-  auth_context_t authContext = NULL;
+  auth_context_t authContext = nullptr;
 
   smtpErrors.clear();
   session = smtp_create_session();
-  if (session == NULL) {
+  if (session == nullptr) {
     errorMessage = "smtp_create_session(): ";
     errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
     return false;
   }
   _message = smtp_add_message(session);
-  if (_message == NULL) {
+  if (_message == nullptr) {
     errorMessage = "smtp_add_message(): ";
     errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
     return false;
@@ -93,7 +93,7 @@ bool SMTP::send() {
   if (_auth == 1) {
     auth_client_init();
     authContext = auth_create_context();
-    if (authContext == NULL) {
+    if (authContext == nullptr) {
       errorMessage = "auth_create_context(): ";
       errorMessage += strerror(ENOMEM);
       return false;
@@ -113,14 +113,14 @@ bool SMTP::send() {
     errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
     return false;
   }
-  if (smtp_set_header(_message, "To", NULL, NULL) == 0) {
+  if (smtp_set_header(_message, "To", nullptr, nullptr) == 0) {
     errorMessage = "smtp_set_header(): ";
     errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
     return false;
   }
   for (size_t i = 0; i < _recipients.size(); ++i) {
     __recipients = smtp_add_recipient(_message, _recipients[i].c_str());
-    if (__recipients == NULL) {
+    if (__recipients == nullptr) {
       errorMessage = "smtp_add_recipient(): ";
       errorMessage += smtp_strerror(smtp_errno(), _error, sizeof(_error));
       return false;
@@ -167,8 +167,8 @@ const std::string &SMTP::error() const {
 const char *messageCallback(void *buffer[] __attribute__((unused)),
                             int *length, void *smtp) {
   SMTP *_smtp = (SMTP*)smtp;
-  if (length == NULL) {
-    return NULL;
+  if (length == nullptr) {
+    return nullptr;
   }
   switch (_smtp -> messageStatus) {
     case MESSAGE:
@@ -177,10 +177,10 @@ const char *messageCallback(void *buffer[] __attribute__((unused)),
       return _smtp -> ___message.c_str();
       break;
     case DONE:
-      return NULL;
+      return nullptr;
   }
   /* Not reached. */
-  return NULL;
+  return nullptr;
 }
 
 /*

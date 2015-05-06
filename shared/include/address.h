@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2007-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,14 +26,12 @@
 #define ADDRESS_H
 
 #include <cstring>
-
 #include <string>
 #include <utility>
 
-#include <sys/socket.h>
-
 #include <arpa/inet.h>
 #include <stdint.h>
+#include <sys/socket.h>
 
 #define	ETHER_ADDR_LEN	6
 

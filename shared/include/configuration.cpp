@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2007-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -78,7 +78,7 @@ const std::string &Configuration::fileName() const {
 }
 
 const std::string &Configuration::getString(const std::string option) const {
-  std::map <std::string, std::vector <std::string> >::const_iterator _option = options.find(option);
+  std::map <std::string, std::vector <std::string>>::const_iterator _option = options.find(option);
   if (_option == options.end()) {
     return empty;
   }
@@ -86,14 +86,14 @@ const std::string &Configuration::getString(const std::string option) const {
 }
 
 const std::vector <std::string> &Configuration::getStrings(const std::string option) const {
-  std::map <std::string, std::vector <std::string> >::const_iterator _option = options.find(option);
+  std::map <std::string, std::vector <std::string>>::const_iterator _option = options.find(option);
   return _option -> second;
 }
 
 size_t Configuration::getNumber(const std::string option) const {
-  std::map <std::string, std::vector <std::string> >::const_iterator _option = options.find(option);
+  std::map <std::string, std::vector <std::string>>::const_iterator _option = options.find(option);
   if (_option == options.end()) {
     return std::numeric_limits <size_t>::max();
   }
-  return strtoul((_option -> second)[0].c_str(), NULL, 10);
+  return strtoul((_option -> second)[0].c_str(), nullptr, 10);
 }

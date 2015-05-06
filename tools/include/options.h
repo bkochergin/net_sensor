@@ -31,7 +31,7 @@
 #define OPTIONS_H
 
 #include <string>
-#include <tr1/unordered_map>
+#include <unordered_map>
 
 class Options {
   public:
@@ -45,8 +45,8 @@ class Options {
     const std::string &error() const;
   private:
     bool initialized;
-    std::tr1::unordered_map <std::string, std::pair <int, bool> > options;
-    std::tr1::unordered_map <std::string, std::pair <int, bool> >::const_iterator optionItr;
+    std::unordered_map <std::string, std::pair <int, bool> > options;
+    std::unordered_map <std::string, std::pair <int, bool> >::const_iterator optionItr;
     int _argc;
     int __argc;
     char *const *_argv;

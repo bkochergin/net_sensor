@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,7 @@
 #include <cstring>
 
 #include <stack>
-#include <tr1/memory>
+#include <memory>
 
 template <class T>
 class Memory {
@@ -42,7 +42,7 @@ class Memory {
     bool initialize(const size_t numBlocks, const size_t size);
     operator bool() const;
     const std::string &error() const;
-    std::tr1::shared_ptr <T> allocate();
+    std::shared_ptr <T> allocate();
     const size_t &size() const;
     const size_t &capacity() const;
     ~Memory();
@@ -94,7 +94,7 @@ template <class T>
 bool Memory <T>::initialize(const size_t numBlocks, const size_t size) {
   int error;
   if (initialized == false) {
-    error = pthread_mutex_init(&mutex, NULL);
+    error = pthread_mutex_init(&mutex, nullptr);
     if (error != 0) {
       _error = true;
       errorMessage = "Memory::initialize(): pthread_mutex_init(): ";
@@ -104,7 +104,7 @@ bool Memory <T>::initialize(const size_t numBlocks, const size_t size) {
     _size = 0;
     _capacity = numBlocks;
     beginning = (T*)malloc(sizeof(T) * numBlocks * size);
-    if (beginning == NULL) {
+    if (beginning == nullptr) {
       _error = true;
       errorMessage = "Memory::initialize(): malloc(): ";
       errorMessage += strerror(errno);
@@ -132,7 +132,7 @@ const std::string &Memory <T>::error() const {
 }
 
 template <class T>
-std::tr1::shared_ptr <T> Memory <T>::allocate() {
+std::shared_ptr <T> Memory <T>::allocate() {
   T *temp;
   if (initialized == true && blocks.size() > 0) {
     pthread_mutex_lock(&mutex);
@@ -140,9 +140,9 @@ std::tr1::shared_ptr <T> Memory <T>::allocate() {
     blocks.pop();
     ++_size;
     pthread_mutex_unlock(&mutex);
-    return std::tr1::shared_ptr <T>(new(temp) T, Deallocator(*this));
+    return std::shared_ptr <T>(new(temp) T, Deallocator(*this));
   }
-  return std::tr1::shared_ptr <T>();
+  return std::shared_ptr <T>();
 }
 
 template <class T>

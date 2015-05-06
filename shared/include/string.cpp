@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2008-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,7 @@
 #include <vector>
 
 #include <sys/socket.h>
+#include <sys/types.h>
 
 #include <arpa/inet.h>
 #ifdef __FreeBSD__
@@ -50,7 +51,7 @@ struct HTTPMessage {
   http_parser_type type;
   TimeStamp time;
   std::vector <std::string> message;
-  std::vector <std::pair <std::string, std::string> > headers;
+  std::vector <std::pair <std::string, std::string>> headers;
 };
 
 struct HTTPSession {

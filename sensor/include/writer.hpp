@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,7 @@
 
 #include <queue>
 #include <string>
-#include <tr1/memory>
+#include <memory>
 
 #include <include/berkeleyDB.h>
 
@@ -46,7 +46,7 @@ class Writer {
     const std::string &error() const;
     template <class _Flow>
     friend void *writeFlows(void*);
-    void write(std::tr1::shared_ptr <Flow>, const uint32_t&);
+    void write(std::shared_ptr <Flow>, const uint32_t&);
     void flush();
     void finish();
     ~Writer();
@@ -72,7 +72,7 @@ class Writer {
     std::string errorMessage;
     bool initialized;
     BerkeleyDB db;
-    std::queue <std::pair <std::tr1::shared_ptr <Flow>, uint32_t> > writeQueue;
+    std::queue <std::pair <std::shared_ptr <Flow>, uint32_t>> writeQueue;
     pthread_t writerThread;
     bool status;
     bool _flush;
@@ -149,7 +149,7 @@ void Writer <Flow>::Record::clear() {
 template <class Flow>
 void *writeFlows(void *writer) {
   ((Writer <Flow>*)writer) -> _writeFlows();
-  return NULL;
+  return nullptr;
 }
 
 template <class Flow>
@@ -207,16 +207,16 @@ bool Writer <Flow>::initialize(const std::string directory,
                                const uint32_t timeout, Function function) {
   int error;
   if (initialized == false) {
-    if ((error = pthread_mutex_init(&writeLock, NULL)) != 0 ||
-        (error = pthread_mutex_init(&statusLock, NULL)) != 0 ||
-        (error = pthread_mutex_init(&queueLock, NULL)) != 0 ||
-        (error = pthread_mutex_init(&flushLock, NULL)) != 0) {
+    if ((error = pthread_mutex_init(&writeLock, nullptr)) != 0 ||
+        (error = pthread_mutex_init(&statusLock, nullptr)) != 0 ||
+        (error = pthread_mutex_init(&queueLock, nullptr)) != 0 ||
+        (error = pthread_mutex_init(&flushLock, nullptr)) != 0) {
       _error = true;
       errorMessage = "Writer::initialize(): pthread_mutex_init(): ";
       errorMessage += strerror(error);
       return false;
     }
-    error = pthread_cond_init(&writeCondition, NULL);
+    error = pthread_cond_init(&writeCondition, nullptr);
     if (error != 0) {
       _error = true;
       errorMessage = "Writer::initialize(): pthread_cond_init(): ";
@@ -232,7 +232,7 @@ bool Writer <Flow>::initialize(const std::string directory,
       errorMessage = "Writer::initialize(): " + db.error();
       return false;
     }
-    error = pthread_create(&writerThread, NULL, &writeFlows <Flow>, this);
+    error = pthread_create(&writerThread, nullptr, &writeFlows <Flow>, this);
     if (error != 0) {
       _error = true;
       errorMessage = "Writer::initialize(): pthread_create(): ";
@@ -256,7 +256,7 @@ const std::string &Writer <Flow>::error() const {
 }
 
 template <class Flow>
-void Writer <Flow>::write(std::tr1::shared_ptr <Flow> flow,
+void Writer <Flow>::write(std::shared_ptr <Flow> flow,
                           const uint32_t &startTime) {
   pthread_mutex_lock(&queueLock);
   writeQueue.push(std::make_pair(flow, startTime));
@@ -283,7 +283,7 @@ void Writer <Flow>::finish() {
     pthread_cond_broadcast(&writeCondition);
   }
   pthread_mutex_unlock(&statusLock);
-  pthread_join(writerThread, NULL);
+  pthread_join(writerThread, nullptr);
 }
 
 template <class Flow>

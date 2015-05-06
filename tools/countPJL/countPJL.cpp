@@ -31,7 +31,7 @@
 #include <iostream>
 #include <map>
 #include <string>
-#include <tr1/unordered_map>
+#include <unordered_map>
 #include <vector>
 
 #include <netinet/in.h>
@@ -42,7 +42,6 @@
 #include <include/timeStamp.h>
 
 using namespace std;
-using namespace tr1;
 
 unordered_map <string, uint16_t> computers;
 multimap <uint16_t, string> sortedComputers;

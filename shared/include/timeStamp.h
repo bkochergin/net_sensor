@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -25,11 +25,10 @@
 #ifndef TIME_STAMP_H
 #define TIME_STAMP_H
 
+#include <cstdint>
 #include <string>
 
 #include <sys/time.h>
-
-#include <stdint.h>
 
 class TimeStamp {
   public:

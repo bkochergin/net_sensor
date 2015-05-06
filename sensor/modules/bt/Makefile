@@ -1,11 +1,10 @@
 include ../Makefile.inc
 
 bt.so: udpTrackerSession.h udpTrackerSession.cpp bt.cpp Makefile
-	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC ${INCLUDES} \
-		-c udpTrackerSession.cpp
-	${CXX} ${CXXFLAGS} -Wall -Wextra -fPIC ${INCLUDES} \
+	${CXX} ${CXXFLAGS} -fPIC ${INCLUDES} -c udpTrackerSession.cpp
+	${CXX} ${CXXFLAGS} -fPIC ${INCLUDES} \
 		-I/usr/local/include -c bt.cpp
-	${CXX} ${CXXFLAGS} -Wall -Wextra -shared -lesmtp -L/usr/local/lib \
+	${CXX} ${CXXFLAGS} -shared -lesmtp -L/usr/local/lib \
 		-o bt.so udpTrackerSession.o bt.o ${LIBS}
 
 clean:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Boris Kochergin. All rights reserved.
+ * Copyright 2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,7 @@
 
 #include <map>
 #include <string>
-#include <tr1/unordered_map>
+#include <unordered_map>
 #include <vector>
 
 #include <stdint.h>
@@ -51,8 +51,8 @@ class Country {
     };
     std::map <uint32_t, _Country> countryMap;
     std::map <uint32_t, _Country>::const_iterator countryItr;
-    std::tr1::unordered_map <std::string, std::string> countryNames;
-    std::tr1::unordered_map <std::string, std::string>::const_iterator countryNameItr;
+    std::unordered_map <std::string, std::string> countryNames;
+    std::unordered_map <std::string, std::string>::const_iterator countryNameItr;
     std::string empty;
     bool _error;
     std::string errorMessage;

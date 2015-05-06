@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2007-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,7 +26,6 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-
 #include <iomanip>
 #include <sstream>
 
@@ -79,7 +78,7 @@ std::pair <uint32_t, uint32_t> cidrToIPs(const std::string &network) {
   return std::make_pair(ip,
                         ip + pow((double)2,
                                  (double)(32 - strtoul(network.substr(slash + 1).c_str(),
-                                                       NULL, 10))) - 1);
+                                                       nullptr, 10))) - 1);
 }
 
 std::string textIP(const uint32_t &binary) {

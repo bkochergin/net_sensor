@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -25,13 +25,12 @@
 #include <cerrno>
 #include <cstring>
 #include <ctime>
-
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <tr1/unordered_map>
-#include <tr1/memory>
+#include <unordered_map>
+#include <memory>
 
 #include <include/consumers.hpp>
 #include <include/flowID.h>
@@ -42,7 +41,6 @@
 #include <include/module.h>
 
 using namespace std;
-using namespace tr1;
 
 /* Consumers of HTTP data must have a "processHTTP" function defined. */
 const char *callback = "processHTTP";
@@ -54,8 +52,8 @@ static const Packet *_packet;
  * The session table is a hash table of shared pointers to HTTPSession
  * structures with flow IDs as keys.
  */
-static unordered_map <string, shared_ptr <HTTPSession> > sessions;
-static unordered_map <string, shared_ptr <HTTPSession> >::iterator sessionItr;
+static unordered_map <string, shared_ptr <HTTPSession>> sessions;
+static unordered_map <string, shared_ptr <HTTPSession>>::iterator sessionItr;
 static shared_ptr <HTTPSession> session;
 /* Session memory allocator. */
 static Memory <HTTPSession> memory;
@@ -119,7 +117,7 @@ static int fragment(http_parser *parser __attribute__((unused)),
 static int headerField(http_parser *parser, const char *field,
                        size_t length) {
   static HTTPMessageState *state;
-  static vector <pair <string, string> > *headers;
+  static vector <pair <string, string>> *headers;
   switch (parser -> type) {
     case HTTP_REQUEST:
       state = &(session -> requestState);
@@ -165,7 +163,7 @@ static int headerField(http_parser *parser, const char *field,
 static int headerValue(http_parser *parser, const char *value,
                        size_t length) {
   static HTTPMessageState *state;
-  static vector <pair <string, string> > *headers;
+  static vector <pair <string, string>> *headers;
   switch (parser -> type) {
     case HTTP_REQUEST:
       state = &(session -> requestState);
@@ -270,13 +268,13 @@ extern "C" {
      * allocate one mutex per bucket.
      */
     locks = new(nothrow) pthread_mutex_t[sessions.bucket_count()];
-    if (locks == NULL) {
+    if (locks == nullptr) {
       error = "malloc(): ";
       error += strerror(errno);
       return 1;
     }
     for (size_t i = 0; i < sessions.bucket_count(); ++i) {
-      _error = pthread_mutex_init(&(locks[i]), NULL);
+      _error = pthread_mutex_init(&(locks[i]), nullptr);
       if (_error != 0) {
         error = "pthread_mutex_init(): ";
         error += strerror(_error);
@@ -419,9 +417,9 @@ extern "C" {
 
   int flush() {
     static time_t _time;
-    static unordered_map <string, shared_ptr <HTTPSession> >::local_iterator localItr;
-    static vector <pair <string, shared_ptr <HTTPSession> > > erase;
-    _time = time(NULL);
+    static unordered_map <string, shared_ptr <HTTPSession>>::local_iterator localItr;
+    static vector <pair <string, shared_ptr <HTTPSession>>> erase;
+    _time = time(nullptr);
     logger -> lock();
     (*logger) << logger -> time()
               << "HTTP module: session table:" << sessions.size() << endl;

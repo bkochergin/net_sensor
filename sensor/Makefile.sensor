@@ -8,19 +8,19 @@ sensor: ${DEPENDENCIES} sensor.cpp Makefile Makefile.sensor
 	@make sensor-${OSTYPE}
 
 sensor-FreeBSD:
-	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} -ldb -lpcap -lpthread \
+	${CXX} ${CXXFLAGS} ${INCLUDES} -ldb -lpcap -lpthread \
 		-L${DB_LIBS} -o sensor sensor.cpp ${LIBS}
 
 sensor-linux:
-	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} -ldb -ldl -lpcap \
+	${CXX} ${CXXFLAGS} ${INCLUDES} -ldb -ldl -lpcap \
 		-lpthread -o sensor sensor.cpp ${LIBS}
 
 sensor-linux-gnu:
-	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} -ldb -ldl -lpcap \
+	${CXX} ${CXXFLAGS} ${INCLUDES} -ldb -ldl -lpcap \
 		-lpthread -o sensor sensor.cpp ${LIBS}
 
 sensor-darwin:
-	${CXX} ${CXXFLAGS} -Wall -Wextra ${INCLUDES} -ldb -lpcap -lpthread \
+	${CXX} ${CXXFLAGS} ${INCLUDES} -ldb -lpcap -lpthread \
 		-L/opt/local/lib -L/opt/local/lib/db44 -o sensor sensor.cpp \
 		${LIBS}
 

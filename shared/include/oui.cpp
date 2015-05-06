@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -46,7 +46,7 @@ bool OUI::initialize(const std::string fileName) {
   }
   while (getline(file, line)) {
     if (line.length() >= 22 && line.substr(11, 9) == "(base 16)") {
-      oui = htonl(strtoul(line.c_str(), NULL, 16));
+      oui = htonl(strtoul(line.c_str(), nullptr, 16));
       ouiMap.insert(std::make_pair(std::string((const char*)(&oui) + 1, 3),
                     line.substr(22)));
     }

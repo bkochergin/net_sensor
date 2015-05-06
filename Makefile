@@ -1,3 +1,5 @@
+include Makefile.inc
+
 SUBDIRS=shared sensor tools
 
 all: ${SUBDIRS} Makefile

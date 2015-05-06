@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -44,7 +44,7 @@ Module::Module(const std::string &moduleDirectory,
     return;
   }
   _handle = dlopen(_fileName.c_str(), RTLD_NOW);
-  if (_handle == NULL) {
+  if (_handle == nullptr) {
     _error = true;
     errorMessage = "dlopen(): ";
     errorMessage += dlerror();
@@ -53,20 +53,20 @@ Module::Module(const std::string &moduleDirectory,
   _initialize = dlsym(_handle, "initialize");
   flush = (flushFunction)dlsym(_handle, "flush");
   finish = (finishFunction)dlsym(_handle, "finish");
-  processPacket = NULL;
-  _callback = NULL;
-  if (_initialize == NULL || flush == NULL || finish == NULL) {
+  processPacket = nullptr;
+  _callback = nullptr;
+  if (_initialize == nullptr || flush == nullptr || finish == nullptr) {
     _error = true;
     errorMessage = _fileName + ": dlsym(): " + dlerror();
     return;
   }
   __callback = (char*)dlsym(_handle, "callback");
-  if (__callback != NULL) {
+  if (__callback != nullptr) {
     _callback = *(char**)__callback;
   }
   pcapDescriptor = pcap_open_dead(DLT_EN10MB,
                                   std::numeric_limits <uint16_t>::max());
-  if (pcapDescriptor == NULL) {
+  if (pcapDescriptor == nullptr) {
     _error = true;
     errorMessage = pcap_geterr(pcapDescriptor);
     return;

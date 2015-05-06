@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Boris Kochergin. All rights reserved.
+ * Copyright 2011-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,7 +28,7 @@
 
 #include <string>
 #include <vector>
-#include <tr1/memory>
+#include <memory>
 
 #include <include/configuration.h>
 #include <include/flowID.h>
@@ -40,14 +40,13 @@
 #include "pjlSession.h"
 
 using namespace std;
-using namespace tr1;
 
 /*
  * The session table is a hash table of shared pointers to PJLSession
  * structures with flow IDs as keys.
  */
-static unordered_map <string, shared_ptr <PJLSession> > sessions;
-static unordered_map <string, shared_ptr <PJLSession> >::iterator itr;
+static unordered_map <string, shared_ptr <PJLSession>> sessions;
+static unordered_map <string, shared_ptr <PJLSession>>::iterator itr;
 static shared_ptr <PJLSession> session;
 /* Session memory allocator. */
 static Memory <PJLSession> memory;
@@ -158,13 +157,13 @@ extern "C" {
      * allocate one mutex per bucket.
      */
     locks = new(nothrow) pthread_mutex_t[sessions.bucket_count()];
-    if (locks == NULL) {
+    if (locks == nullptr) {
       error = "malloc(): ";
       error += strerror(errno);
       return 1;
     }
     for (size_t i = 0; i < sessions.bucket_count(); ++i) {
-      _error = pthread_mutex_init(&(locks[i]), NULL);
+      _error = pthread_mutex_init(&(locks[i]), nullptr);
       if (_error != 0) {
         error = "pthread_mutex_init(): ";
         error += strerror(_error);
@@ -237,13 +236,13 @@ extern "C" {
     itr -> second -> size += packet.payloadSize();
     end = packet.payload();
     end = (const u_char*)memchr(packet.payload(), '\n', packet.payloadSize());
-    if (end == NULL) {
+    if (end == nullptr) {
       itr -> second -> line.append((const char*)packet.payload(),
                                    packet.payloadSize());
     }
     else {
       start = packet.payload();
-      while (end != NULL) {
+      while (end != nullptr) {
         itr -> second -> line.append((const char*)start, end - start);
         parse(*(itr -> second));
         itr -> second -> line.clear();
@@ -266,9 +265,9 @@ extern "C" {
 
   int flush() {
     static time_t _time;
-    static unordered_map <string, shared_ptr <PJLSession> >::local_iterator localItr;
+    static unordered_map <string, shared_ptr <PJLSession>>::local_iterator localItr;
     static vector <string> erase;
-    _time = time(NULL);
+    _time = time(nullptr);
     /*
      * To avoid cluttering the log, only warn about the session table being
      * full, and not having any more job buffer memory, a maximum of once per

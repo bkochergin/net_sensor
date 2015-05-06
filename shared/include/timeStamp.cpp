@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,6 +28,8 @@
 #include <iomanip>
 
 #include "timeStamp.h"
+
+static constexpr int kNumMicrosInSecond = 1000*1000;
 
 TimeStamp::TimeStamp() {
   _seconds = 0;
@@ -120,7 +122,7 @@ TimeStamp &TimeStamp::operator -=(const TimeStamp &right) {
     return *this;
   }
   if (_microseconds < right.microseconds()) {
-    _microseconds += 1000000;
+    _microseconds += kNumMicrosInSecond;
     _seconds -= 1;
   }
   _microseconds -= right.microseconds();
@@ -135,9 +137,9 @@ const TimeStamp TimeStamp::operator -(const TimeStamp &right) const {
 TimeStamp &TimeStamp::operator +=(const TimeStamp &right) {
   _microseconds += right.microseconds();
   _seconds += right.seconds();
-  if (_microseconds >= 1000000) {
+  if (_microseconds >= kNumMicrosInSecond) {
     ++_seconds;
-    _microseconds -= 1000000;
+    _microseconds -= kNumMicrosInSecond;
   }
   return *this;
 }

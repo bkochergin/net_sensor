@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,7 +26,7 @@
 #define BERKELEY_DB_H
 
 #include <string>
-#include <tr1/unordered_map>
+#include <unordered_map>
 
 #include <db.h>
 #include <pthread.h>
@@ -65,11 +65,11 @@ class BerkeleyDB {
         DBT data;
         uint32_t recordNumber;
     };
-    std::tr1::unordered_map <uint32_t, _BerkeleyDB> databases;
+    std::unordered_map <uint32_t, _BerkeleyDB> databases;
     std::string directory(const time_t &time);
     std::string hour(const uint32_t &time);
-    std::tr1::unordered_map <uint32_t, _BerkeleyDB>::iterator find(const uint32_t &time);
-    std::tr1::unordered_map <uint32_t, _BerkeleyDB>::iterator create(const uint32_t &time);
+    std::unordered_map <uint32_t, _BerkeleyDB>::iterator find(const uint32_t &time);
+    std::unordered_map <uint32_t, _BerkeleyDB>::iterator create(const uint32_t &time);
     bool checkDirectory(const std::string &directory);
     bool makeDirectory(const std::string &directory, const mode_t mode);
 };

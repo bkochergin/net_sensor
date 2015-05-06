@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Boris Kochergin. All rights reserved.
+ * Copyright 2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,14 +33,14 @@ void getPTRRecords(std::vector <std::string> &ptrRecords, const uint32_t &ip) {
   internetAddress.s_addr = ip;
   hostent *hostEntry = gethostbyaddr((const void*)&internetAddress,
                                      sizeof(internetAddress), AF_INET);
-  if (hostEntry != NULL) {
+  if (hostEntry != nullptr) {
     if (strlen(hostEntry -> h_name) == 0) {
       ptrRecords.push_back(".");
     }
     else {
       ptrRecords.push_back(hostEntry -> h_name);
     }
-    while (*(hostEntry -> h_aliases) != NULL) {
+    while (*(hostEntry -> h_aliases) != nullptr) {
       if (strlen(*(hostEntry -> h_aliases)) == 0) {
         ptrRecords.push_back(".");
       }

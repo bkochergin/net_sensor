@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,7 +40,7 @@ bool Logger::initialize(const std::string fileName,
                         const std::string timeFormat) {
   _error = true;
   _timeFormat = timeFormat;
-  int ret = pthread_mutex_init(&_lock, NULL);
+  int ret = pthread_mutex_init(&_lock, nullptr);
   if (ret != 0) {
     _error = true;
     errorMessage = "Logger::initialize(): pthread_mutex_init(): ";
@@ -81,7 +81,7 @@ Logger &Logger::operator <<(std::ostream& (*manipulator)(std::ostream&)) {
 }
 
 const char *Logger::time() {
-  _time = ::time(NULL);
+  _time = ::time(nullptr);
   localtime_r(&_time, &__time);
   strftime(timeBuffer, sizeof(timeBuffer), _timeFormat.c_str(), &__time);
   return timeBuffer;

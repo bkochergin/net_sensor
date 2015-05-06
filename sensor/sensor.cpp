@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -22,28 +22,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <atomic>
 #include <cerrno>
 #include <csignal>
-
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <map>
 
-#ifdef __FreeBSD__
-#include <sys/ioctl.h>
-#endif
+#include <dlfcn.h>
+#include <pcap.h>
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/types.h>
-
-#include <dlfcn.h>
-#include <pcap.h>
-#include <stdint.h>
 #include <unistd.h>
 
 #include <include/configuration.h>
-#include <include/module.h>
 #include <include/logger.h>
+#include <include/module.h>
 #include <include/packet.h>
 #include <include/string.h>
 
@@ -56,7 +52,7 @@ vector <Module> modules;
 map <string, size_t> moduleIndex;
 pcap_t *pcapDescriptor;
 pthread_t flushThread, statsThread;
-bool capture = true;
+atomic<bool> capture(true);
 uint64_t processedPackets, droppedPackets;
 size_t flushInterval, statsInterval;
 
@@ -80,7 +76,7 @@ void *flush(void*) {
       modules[i].flush();
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 void *stats(void*) {
@@ -126,7 +122,7 @@ void *stats(void*) {
     logger.unlock();
     oldDroppedPackets = droppedPackets;
   }
-  return NULL;
+  return nullptr;
 }
 
 void cleanup(const pid_t &pid, const std::string &pidFileName) {
@@ -229,7 +225,7 @@ int main(int argc, char *argv[]) {
         if (dependencies[j] == "packet") {
           modules[i].processPacket = (processPacketFunction)dlsym(modules[i].handle(),
                                                                   "processPacket");
-          if (modules[i].processPacket == NULL) {
+          if (modules[i].processPacket == nullptr) {
             cerr << argv[0] << ": " << modules[i].fileName() << ": no "
                  << "\"processPacket\" callback defined" << endl;
             return 1;
@@ -249,7 +245,7 @@ int main(int argc, char *argv[]) {
                  << endl;
             return 1;
           }
-          if (modules[itr -> second].callback() == NULL) {
+          if (modules[itr -> second].callback() == nullptr) {
             cerr << argv[0] << ": " <<  modules[i].fileName()
                  << ": dependency \"" << dependencies[j]
                  << "\" has no callback defined" << endl;
@@ -257,7 +253,7 @@ int main(int argc, char *argv[]) {
           }
           modules[itr -> second].callbacks().push_back(dlsym(modules[i].handle(),
                                                        modules[itr -> second].callback()));
-          if (*(modules[itr -> second].callbacks().rbegin()) == NULL) {
+          if (*(modules[itr -> second].callbacks().rbegin()) == nullptr) {
             cerr << argv[0] << ": " << modules[i].fileName() << ": no \""
                  << modules[itr -> second].callback() << "\" callback defined"
                  << endl;
@@ -270,7 +266,7 @@ int main(int argc, char *argv[]) {
   pcapDescriptor = pcap_open_live(conf.getString("interface").c_str(),
                                   std::numeric_limits <uint16_t>::max(), 1, 0,
                                   errorBuffer);
-  if (pcapDescriptor == NULL) {
+  if (pcapDescriptor == nullptr) {
     cerr << argv[0] << ": " << errorBuffer << endl;
     return 1;
   }
@@ -279,7 +275,7 @@ int main(int argc, char *argv[]) {
    * combining the filter strings of all modules that will consume packets.
    */
   for (size_t i = 0; i < modules.size(); ++i) {
-    if (modules[i].processPacket != NULL &&
+    if (modules[i].processPacket != nullptr &&
         modules[i].conf().getString("filter") != "") {
       filters.push_back(modules[i].conf().getString("filter"));
     }
@@ -332,13 +328,13 @@ int main(int argc, char *argv[]) {
     }
   }
   /* Start flush() thread. */
-  error = pthread_create(&flushThread, NULL, &flush, NULL);
+  error = pthread_create(&flushThread, nullptr, &flush, nullptr);
   if (error != 0) {
     cerr << argv[0] << ": pthread_create(): " << strerror(error) << endl;
     return 1;
   }
   /* Start stats() thread. */
-  error = pthread_create(&statsThread, NULL, &stats, NULL);
+  error = pthread_create(&statsThread, nullptr, &stats, nullptr);
   if (error != 0) {
     cerr << argv[0] << ": pthread_create(): " << strerror(error) << endl;
     return 1;
@@ -349,7 +345,7 @@ int main(int argc, char *argv[]) {
    * unlink it later.
    */
   if (pidFileName[0] != '/') {
-    if (getcwd(cwd, MAXPATHLEN) == NULL) {
+    if (getcwd(cwd, MAXPATHLEN) == nullptr) {
       cerr << argv[0] << ": getcwd(): " << strerror(errno) << endl;
       return 1;
     }
@@ -402,11 +398,11 @@ int main(int argc, char *argv[]) {
    * call each interested module's processPacket() function with it.
    */
   while (capture == true) {
-    if ((pcapPacket = pcap_next(pcapDescriptor, &pcapHeader)) != NULL) { 
+    if ((pcapPacket = pcap_next(pcapDescriptor, &pcapHeader)) != nullptr) { 
       ++processedPackets;
       if (packet.initialize(pcapHeader, pcapPacket) == true) {
         for (size_t i = 0; i < modules.size(); ++i) {
-          if (modules[i].processPacket != NULL &&
+          if (modules[i].processPacket != nullptr &&
               bpf_filter(modules[i].bpfProgram().bf_insns, (u_char*)pcapPacket,
               pcapHeader.len, pcapHeader.caplen) != 0) {
             modules[i].processPacket(packet);
@@ -416,7 +412,7 @@ int main(int argc, char *argv[]) {
     }
   }
   /* Allow the flush() thread to exit gracefully. */
-  error = pthread_join(flushThread, NULL);
+  error = pthread_join(flushThread, nullptr);
   if (error != 0) {
     logger.lock();
     logger << logger.time() << "Sensor: pthread_join(): " << strerror(error)

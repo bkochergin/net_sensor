@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Boris Kochergin. All rights reserved.
+ * Copyright 2011-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,7 +24,7 @@
  * This work was sponsored by the New York Internet Company.
  */
 
-#include <stdint.h>
+#include <cstdint>
 
 class PPSMail {
   public:

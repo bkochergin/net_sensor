@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Boris Kochergin. All rights reserved.
+ * Copyright 2011-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,16 +26,16 @@
 #define CONSUMERS_HPP
 
 #include <vector>
-#include <tr1/memory>
+#include <memory>
 
 template <class T>
 class Consumers {
   public:
-    typedef int (*callback)(const std::tr1::shared_ptr <T> record);
+    typedef int (*callback)(const std::shared_ptr <T> record);
     Consumers();
     Consumers(std::vector <void*> _callbacks);
     void initialize(std::vector <void*> _callbacks);
-    int consume(const std::tr1::shared_ptr <T> record) const;
+    int consume(const std::shared_ptr <T> record) const;
   private:
     std::vector <callback> callbacks;
 };
@@ -56,7 +56,7 @@ void Consumers <T>::initialize(std::vector <void*> _callbacks) {
 }
 
 template <class T>
-int Consumers <T>::consume(const std::tr1::shared_ptr <T> record) const {
+int Consumers <T>::consume(const std::shared_ptr <T> record) const {
   for (size_t i = 0; i < callbacks.size(); ++i) {
     if (callbacks[i](record) != 0) {
       return 1;

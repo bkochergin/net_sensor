@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Boris Kochergin. All rights reserved.
+ * Copyright 2011-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,7 +28,6 @@
 #include <cstdio>
 #include <cstring>
 #include <ctime>
-
 #include <iomanip>
 #include <locale>
 #include <map>
@@ -36,8 +35,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <tr1/memory>
-#include <tr1/unordered_map>
+#include <memory>
+#include <unordered_map>
 
 #include <include/address.h>
 #include <include/configuration.h>
@@ -53,7 +52,6 @@
 #include "stats.hpp"
 
 using namespace std;
-using namespace tr1;
 
 /*
  * A prefix tree of internal networks whose IPv4 addresses we'll be monitoring.
@@ -63,7 +61,7 @@ map <uint32_t, uint32_t> networks;
  * The stats table is a hash table of shared pointers to Stats structures with
  * IPv4 addresses as keys.
  */
-static unordered_map <uint32_t, shared_ptr <Stats> > addressStats;
+static unordered_map <uint32_t, shared_ptr <Stats>> addressStats;
 /* Stats memory allocator. */
 static Memory <Stats> memory;
 /* Locks for the stats table. */
@@ -130,7 +128,7 @@ static string size(double bytes) {
 void shell(ostringstream &output, const string &command) {
   FILE *stdout = popen(command.c_str(), "r");
   char line[1024];
-  while (fgets(line, sizeof(line), stdout) != NULL) {
+  while (fgets(line, sizeof(line), stdout) != nullptr) {
     output << line;
   }
   pclose(stdout);
@@ -151,7 +149,7 @@ extern "C" {
     mailInterval = conf.getNumber("mailInterval");
     interface = conf.getString("interface");
     numPackets = conf.getNumber("numPackets");
-    lastFlush = time(NULL);
+    lastFlush = time(nullptr);
     ::logger = &logger;
     /*
      * Rehash the address stats table for as many IPv4 addresses as we may need
@@ -172,13 +170,13 @@ extern "C" {
      * allocate one mutex per bucket.
      */
     locks = new(nothrow) pthread_mutex_t[addressStats.bucket_count()];
-    if (locks == NULL) {
+    if (locks == nullptr) {
       error = "malloc(): ";
       error += strerror(errno);
       return 1;
     }
     for (size_t i = 0; i < addressStats.bucket_count(); ++i) {
-      _error = pthread_mutex_init(&(locks[i]), NULL);
+      _error = pthread_mutex_init(&(locks[i]), nullptr);
       if (_error != 0) {
         error = "pthread_mutex_init(): ";
         error += strerror(_error);
@@ -217,7 +215,7 @@ extern "C" {
 
   int processPacket(const Packet &packet) {
     static size_t bucket;
-    static unordered_map <uint32_t, shared_ptr <Stats> >::iterator itr;
+    static unordered_map <uint32_t, shared_ptr <Stats>>::iterator itr;
     static shared_ptr <Stats> stats;
     if (internal(networks, ntohl(packet.sourceIP())) == true) {
       bucket = addressStats.bucket(packet.sourceIP());
@@ -272,14 +270,14 @@ extern "C" {
 
   int flush() {
     static time_t _time;
-    static unordered_map <uint32_t, shared_ptr <Stats> >::local_iterator localItr;
+    static unordered_map <uint32_t, shared_ptr <Stats>>::local_iterator localItr;
     static vector <uint32_t> erase;
     static uint64_t incomingPPS, outgoingPPS;
     static queue <PPSMail> mailQueue;
     static vector <string> ptrRecords;
     static string ip, _ptrRecords;
     static ostringstream command;
-    _time = time(NULL);
+    _time = time(nullptr);
     if (addressStats.size() > 0) {
       for (size_t i = 0; i < addressStats.bucket_count(); ++i) {
         /*

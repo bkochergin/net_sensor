@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Boris Kochergin. All rights reserved.
+ * Copyright 2010-2015 Boris Kochergin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -50,7 +50,7 @@ BerkeleyDB::BerkeleyDB(const std::string __directory,
 bool BerkeleyDB::initialize(const std::string __directory,
                             const std::string _fileName,
                             const uint32_t _timeout) {
-  int ret = pthread_mutex_init(&_lock, NULL);
+  int ret = pthread_mutex_init(&_lock, nullptr);
   if (ret != 0) {
     _error = true;
     errorMessage = "BerkeleyDB::initialize(): pthread_mutex_init(): ";
@@ -160,23 +160,23 @@ bool BerkeleyDB::makeDirectory(const std::string &directory,
  * number to the appropriate value (1 for new databases, last record number + 1
  * for existing databases).
  */
-std::tr1::unordered_map <uint32_t, BerkeleyDB::_BerkeleyDB>::iterator BerkeleyDB::create(const uint32_t &time) {
+std::unordered_map <uint32_t, BerkeleyDB::_BerkeleyDB>::iterator BerkeleyDB::create(const uint32_t &time) {
   std::string dataFileName = directory(time);
-  std::tr1::unordered_map <uint32_t, _BerkeleyDB>::iterator db;
+  std::unordered_map <uint32_t, _BerkeleyDB>::iterator db;
   if (!makeDirectory(dataFileName, 0755)) {
     return databases.end();
   }
   db = databases.insert(std::make_pair(time, _BerkeleyDB())).first;
   dataFileName += fileName + '_' + hour(time);
-  if (db_create(&(db -> second.db), NULL, 0) != 0) {
+  if (db_create(&(db -> second.db), nullptr, 0) != 0) {
     return databases.end();
   }
-  if (db -> second.db -> open(db -> second.db, NULL, dataFileName.c_str(),
-                              NULL, DB_RECNO, DB_CREATE,
+  if (db -> second.db -> open(db -> second.db, nullptr, dataFileName.c_str(),
+                              nullptr, DB_RECNO, DB_CREATE,
                               S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) != 0) {
     return databases.end();
   }
-  if (db -> second.db -> cursor(db -> second.db, NULL, &(db -> second.cursor),
+  if (db -> second.db -> cursor(db -> second.db, nullptr, &(db -> second.cursor),
                                 0) != 0) {
     return databases.end();
   }
@@ -201,8 +201,8 @@ BerkeleyDB::_BerkeleyDB::_BerkeleyDB() {
  * Given a time, returns an iterator to the appropriate database, creating it if
  * it doesn't exist.
  */
-std::tr1::unordered_map <uint32_t, BerkeleyDB::_BerkeleyDB>::iterator BerkeleyDB::find(const uint32_t &time) {
-  std::tr1::unordered_map <uint32_t, _BerkeleyDB>::iterator db = databases.find(time);
+std::unordered_map <uint32_t, BerkeleyDB::_BerkeleyDB>::iterator BerkeleyDB::find(const uint32_t &time) {
+  std::unordered_map <uint32_t, _BerkeleyDB>::iterator db = databases.find(time);
   if (db != databases.end()) {
     return db;
   }
@@ -214,13 +214,13 @@ std::tr1::unordered_map <uint32_t, BerkeleyDB::_BerkeleyDB>::iterator BerkeleyDB
  * database, creating it if it doesn't exist.
  */
 bool BerkeleyDB::write(const void* data, const size_t dataSize, const uint32_t time) {
-  std::tr1::unordered_map <uint32_t, _BerkeleyDB>::iterator db = find(time - (time % 3600));
+  std::unordered_map <uint32_t, _BerkeleyDB>::iterator db = find(time - (time % 3600));
   if (db != databases.end()) {
     db -> second.key.size = sizeof(db -> second.recordNumber);
     db -> second.key.data = &(db -> second.recordNumber);
     db -> second.data.size = dataSize;
     db -> second.data.data = (void*)data;
-    if (db -> second.db -> put(db -> second.db, NULL, &(db -> second.key),
+    if (db -> second.db -> put(db -> second.db, nullptr, &(db -> second.key),
                                &(db -> second.data), 0) == 0) {
       ++(db -> second.recordNumber);
       return true;
@@ -234,9 +234,9 @@ bool BerkeleyDB::write(const void* data, const size_t dataSize, const uint32_t t
  * that have been open for at least as long as the timeout.
  */
 bool BerkeleyDB::flush() {
-  uint32_t _time = time(NULL);
-  std::vector <std::tr1::unordered_map <uint32_t, _BerkeleyDB>::iterator> erase;
-  for (std::tr1::unordered_map <uint32_t, _BerkeleyDB>::iterator db = databases.begin();
+  uint32_t _time = time(nullptr);
+  std::vector <std::unordered_map <uint32_t, _BerkeleyDB>::iterator> erase;
+  for (std::unordered_map <uint32_t, _BerkeleyDB>::iterator db = databases.begin();
        db != databases.end(); ++db) {
     if (db -> second.db -> sync(db -> second.db, 0) != 0) {
       return false;
@@ -257,7 +257,7 @@ bool BerkeleyDB::flush() {
 }
 
 BerkeleyDB::~BerkeleyDB() {
-  for (std::tr1::unordered_map <uint32_t, _BerkeleyDB>::iterator db = databases.begin();
+  for (std::unordered_map <uint32_t, _BerkeleyDB>::iterator db = databases.begin();
        db != databases.end(); ++db) {
     db -> second.db -> close(db -> second.db, 0);
   }
