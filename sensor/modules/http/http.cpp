@@ -422,7 +422,7 @@ extern "C" {
     _time = time(nullptr);
     logger -> lock();
     (*logger) << logger -> time()
-              << "HTTP module: session table:" << sessions.size() << endl;
+              << "HTTP module: session table: " << sessions.size() << endl;
     logger -> unlock();
     /*
      * To avoid cluttering the log, only warn about the session table being

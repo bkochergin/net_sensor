@@ -32,45 +32,47 @@
 #include <include/logger.h>
 #include <include/packet.h>
 
-typedef int (*processPacketFunction)(const Packet &packet);
+typedef int (*processPacketFunction)(const Packet& packet);
 
 class Module {
   public:
-    typedef int (*initializeFunction)(const Configuration &conf,
-                                      Logger &logger,
-                                      std::string &error);
-    typedef int (*dependencyInitializeFunction)(const Configuration &conf,
-                                                Logger &logger,
-                                                const std::vector <void*> &callbacks,
-                                                std::string &error);
+    typedef int (*initializeFunction)(const Configuration& conf,
+                                      Logger& logger,
+                                      std::string& error);
+    typedef int (*dependencyInitializeFunction)(const Configuration& conf,
+                                                Logger& logger,
+                                                const std::vector<void*>& callbacks,
+                                                std::string& error);
     typedef int (*flushFunction)();
     typedef int (*finishFunction)();
-    Module(const std::string &moduleDirectory,
-           const std::string &configurationDirectory, const std::string &name);
-    int initialize(Logger &logger);
+    Module(const std::string& moduleDirectory,
+           const std::string& configurationDirectory, const std::string& name);
+    int initialize(Logger& logger);
     processPacketFunction processPacket;
     flushFunction flush;
     finishFunction finish;
     operator bool() const;
-    const std::string &error() const;
-    const bpf_program &bpfProgram() const;
-    const std::string &name() const;
-    const std::string &fileName() const;
-    const Configuration &conf() const;
-    void *handle() const;
-    const char *callback() const;
-    std::vector <void*> &callbacks();
+    const std::string& error() const;
+    const std::string& filter() const;
+    const bpf_program& bpfProgram() const;
+    const std::string& name() const;
+    const std::string& fileName() const;
+    const Configuration& conf() const;
+    void* handle() const;
+    const char* callback() const;
+    std::vector<void*>& callbacks();
   private:
-    bool _error;
+    bool error_;
     std::string errorMessage;
-    std::string _name;
-    std::string _fileName;
-    Configuration _conf;
-    void *_handle;
-    char *_callback;
-    std::vector <void*> _callbacks;
-    bpf_program _bpfProgram;
-    void *_initialize;
+    std::string name_;
+    std::string fileName_;
+    Configuration conf_;
+    void* handle_;
+    char* callback_;
+    std::vector<void*> callbacks_;
+    std::string filter_;
+    bpf_program bpfProgram_;
+    void* initialize_;
 };
 
 #endif

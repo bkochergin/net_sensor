@@ -131,10 +131,10 @@ void cleanup(const pid_t &pid, const std::string &pidFileName) {
 }
 
 int main(int argc, char *argv[]) {
-  string configFileName = "sensor.conf", filter;
+  string configFileName = "sensor.conf";
   Configuration conf;
   ofstream pidFile;
-  vector <string> moduleNames, dependencies, filters;
+  vector <string> moduleNames, dependencies;
   map <string, size_t>::iterator itr;
   char option, errorBuffer[PCAP_ERRBUF_SIZE], cwd[MAXPATHLEN];
   bpf_program bpfProgram;
@@ -170,14 +170,12 @@ int main(int argc, char *argv[]) {
     cerr << argv[0] << ": no logging mode specified" << endl;
     return 1;
   }
-  else {
-    if (conf.getString("logging") != "on" && 
-        conf.getString("logging") != "off") {
-      cerr << argv[0] << ": " << conf.fileName() << ": "
-           << "unknown logging mode \"" << conf.getString("logging")
-           << "\" specified" << endl;
-      return 1;
-    }
+  if (conf.getString("logging") != "on" && 
+      conf.getString("logging") != "off") {
+    cerr << argv[0] << ": " << conf.fileName() << ": "
+         << "unknown logging mode \"" << conf.getString("logging")
+         << "\" specified" << endl;
+    return 1;
   }
   if (conf.getString("logging") == "on") {
     if (conf.getString("log") == "") {
@@ -223,8 +221,8 @@ int main(int argc, char *argv[]) {
       for (size_t j = 0; j < dependencies.size(); ++j) {
          /* Check dependencies on packets from the sensor. */
         if (dependencies[j] == "packet") {
-          modules[i].processPacket = (processPacketFunction)dlsym(modules[i].handle(),
-                                                                  "processPacket");
+          modules[i].processPacket =
+              (processPacketFunction)dlsym(modules[i].handle(), "processPacket");
           if (modules[i].processPacket == nullptr) {
             cerr << argv[0] << ": " << modules[i].fileName() << ": no "
                  << "\"processPacket\" callback defined" << endl;
@@ -245,17 +243,17 @@ int main(int argc, char *argv[]) {
                  << endl;
             return 1;
           }
-          if (modules[itr -> second].callback() == nullptr) {
+          if (modules[itr->second].callback() == nullptr) {
             cerr << argv[0] << ": " <<  modules[i].fileName()
                  << ": dependency \"" << dependencies[j]
                  << "\" has no callback defined" << endl;
             return 1;
           }
-          modules[itr -> second].callbacks().push_back(dlsym(modules[i].handle(),
-                                                       modules[itr -> second].callback()));
-          if (*(modules[itr -> second].callbacks().rbegin()) == nullptr) {
+          modules[itr->second].callbacks().push_back(dlsym(modules[i].handle(),
+                                                     modules[itr->second].callback()));
+          if (*(modules[itr->second].callbacks().rbegin()) == nullptr) {
             cerr << argv[0] << ": " << modules[i].fileName() << ": no \""
-                 << modules[itr -> second].callback() << "\" callback defined"
+                 << modules[itr->second].callback() << "\" callback defined"
                  << endl;
             return 1;
           }
@@ -263,9 +261,10 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-  pcapDescriptor = pcap_open_live(conf.getString("interface").c_str(),
-                                  std::numeric_limits <uint16_t>::max(), 1, 0,
-                                  errorBuffer);
+  pcapDescriptor = pcap_open_live(
+      conf.getString("interface").c_str(),
+      std::numeric_limits <uint16_t>::max() /* Snapshot length. */,
+      1 /* Promiscuous mode. */, 0 /* Read timeout. */, errorBuffer);
   if (pcapDescriptor == nullptr) {
     cerr << argv[0] << ": " << errorBuffer << endl;
     return 1;
@@ -274,24 +273,26 @@ int main(int argc, char *argv[]) {
    * The pcap filter string we will use to capture traffic is formed by
    * combining the filter strings of all modules that will consume packets.
    */
-  for (size_t i = 0; i < modules.size(); ++i) {
-    if (modules[i].processPacket != nullptr &&
-        modules[i].conf().getString("filter") != "") {
-      filters.push_back(modules[i].conf().getString("filter"));
-    }
-  }
-  for (size_t i = 0; i < filters.size(); ++i) {
-    filter += '(' + filters[i] + ')';
-    if (i < filters.size() - 1) {
-      filter += " or ";
+  vector<string> filters;
+  for (const Module& module : modules) {
+    if (module.processPacket != nullptr && !module.filter().empty()) {
+      logger.lock();
+      logger << logger.time() << module.name() << " module filter: "
+             << module.filter() << endl;
+      logger.unlock();      
+      filters.push_back(module.filter());
     }
   }
   /*
    * Older versions of libpcap expect the third argument of pcap_compile()
    * to be of type "char*".
    */
- if (pcap_compile(pcapDescriptor, &bpfProgram, (char*)filter.c_str(), 1,
-                  0) == -1) {
+  const string combined_filter = implode(filters, " or ");
+  logger.lock();
+  logger << logger.time() << "Combined filter: " << combined_filter << endl;
+  logger.unlock();
+  if (pcap_compile(pcapDescriptor, &bpfProgram, (char*)combined_filter.c_str(),
+                   1 /* Optimize. */, 0 /* Netmask. */) == -1) {
     cerr << argv[0] << ": pcap_compile(): " << pcap_geterr(pcapDescriptor)
          << endl;
     return 1;

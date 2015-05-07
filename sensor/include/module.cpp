@@ -23,51 +23,51 @@
  */
 
 #include <cstring>
-
 #include <limits>
 
 #include <dlfcn.h>
 
+#include <include/string.h>
+
 #include "module.h"
 
-Module::Module(const std::string &moduleDirectory,
-               const std::string &configurationDirectory,
-               const std::string &name) {
-  char *__callback;
+Module::Module(const std::string& moduleDirectory,
+               const std::string& configurationDirectory,
+               const std::string& name) {
   std::string moduleErrorMessage;
   pcap_t *pcapDescriptor;
-  _name = name;
-  _fileName = moduleDirectory + '/' + name + ".so";
-  if (!_conf.initialize(configurationDirectory + '/' + name + ".conf")) {
-    _error = true;
-    errorMessage = _conf.error();
+  name_ = name;
+  fileName_ = moduleDirectory + '/' + name + ".so";
+  if (!conf_.initialize(configurationDirectory + '/' + name + ".conf")) {
+    error_ = true;
+    errorMessage = conf_.error();
     return;
   }
-  _handle = dlopen(_fileName.c_str(), RTLD_NOW);
-  if (_handle == nullptr) {
-    _error = true;
+  handle_ = dlopen(fileName_.c_str(), RTLD_NOW);
+  if (handle_ == nullptr) {
+    error_ = true;
     errorMessage = "dlopen(): ";
     errorMessage += dlerror();
     return;
   }
-  _initialize = dlsym(_handle, "initialize");
-  flush = (flushFunction)dlsym(_handle, "flush");
-  finish = (finishFunction)dlsym(_handle, "finish");
+  initialize_ = dlsym(handle_, "initialize");
+  flush = (flushFunction)dlsym(handle_, "flush");
+  finish = (finishFunction)dlsym(handle_, "finish");
   processPacket = nullptr;
-  _callback = nullptr;
-  if (_initialize == nullptr || flush == nullptr || finish == nullptr) {
-    _error = true;
-    errorMessage = _fileName + ": dlsym(): " + dlerror();
+  callback_ = nullptr;
+  if (initialize_ == nullptr || flush == nullptr || finish == nullptr) {
+    error_ = true;
+    errorMessage = fileName_ + ": dlsym(): " + dlerror();
     return;
   }
-  __callback = (char*)dlsym(_handle, "callback");
-  if (__callback != nullptr) {
-    _callback = *(char**)__callback;
+  char* callback__ = (char*)dlsym(handle_, "callback");
+  if (callback__ != nullptr) {
+    callback_ = *(char**)callback__;
   }
-  pcapDescriptor = pcap_open_dead(DLT_EN10MB,
-                                  std::numeric_limits <uint16_t>::max());
+  pcapDescriptor = pcap_open_dead(
+      DLT_EN10MB, std::numeric_limits <uint16_t>::max() /* Snapshot length. */);
   if (pcapDescriptor == nullptr) {
-    _error = true;
+    error_ = true;
     errorMessage = pcap_geterr(pcapDescriptor);
     return;
   }
@@ -75,31 +75,37 @@ Module::Module(const std::string &moduleDirectory,
    * Older versions of libpcap expect the third argument of pcap_compile()
    * to be of type "char*".
    */
-  if (pcap_compile(pcapDescriptor, &_bpfProgram,
-                   (char*)_conf.getString("filter").c_str(), 1, 0) == -1) {
-    _error = true;
-    errorMessage = _fileName + ": pcap_compile(): " +
+  std::vector<std::string> filters;
+  for (const std::string& filter : conf_.getStrings("filter")) {
+    filters.push_back('(' + filter + ')');
+  }
+  filter_ = '(' + implode(filters, " and ") + ')';
+  if (pcap_compile(pcapDescriptor, &bpfProgram_, (char*)filter_.c_str(),
+                   1 /* Optimize. */, 0 /* Netmask. */) == -1) {
+    error_ = true;
+    errorMessage = fileName_ + ": pcap_compile(): " +
                    pcap_geterr(pcapDescriptor);
     return;
   }
   pcap_close(pcapDescriptor);
-  _error = false;
+  error_ = false;
 }
 
-int Module::initialize(Logger &logger) {
-  initializeFunction _initializeFunction = (initializeFunction)_initialize;
-  dependencyInitializeFunction _dependencyInitializeFunction = (dependencyInitializeFunction)_initialize;
+int Module::initialize(Logger& logger) {
+  initializeFunction initializeFunction_ = (initializeFunction)initialize_;
+  dependencyInitializeFunction dependencyInitializeFunction_ =
+      (dependencyInitializeFunction)initialize_;
   std::string moduleErrorMessage;
   int ret;
-  if (_callbacks.size() == 0) {
-    ret = _initializeFunction(_conf, logger, moduleErrorMessage);
+  if (callbacks_.empty()) {
+    ret = initializeFunction_(conf_, logger, moduleErrorMessage);
   }
   else {
-    ret = _dependencyInitializeFunction(_conf,logger, _callbacks,
+    ret = dependencyInitializeFunction_(conf_,logger, callbacks_,
                                         moduleErrorMessage);
   }
   if (ret != 0) {
-    _error = true;
+    error_ = true;
     errorMessage = "initialize(): " + moduleErrorMessage;
     return 1;
   }
@@ -107,37 +113,41 @@ int Module::initialize(Logger &logger) {
 }
 
 Module::operator bool() const {
-  return !_error;
+  return !error_;
 }
 
 const std::string &Module::error() const {
   return errorMessage;
 }
 
-const bpf_program &Module::bpfProgram() const {
-  return _bpfProgram;
+const std::string& Module::filter() const {
+  return filter_;
 }
 
-const std::string &Module::name() const {
-  return _name;
+const bpf_program& Module::bpfProgram() const {
+  return bpfProgram_;
 }
 
-const std::string &Module::fileName() const {
-  return _fileName;
+const std::string& Module::name() const {
+  return name_;
 }
 
-const Configuration &Module::conf() const {
-  return _conf;
+const std::string& Module::fileName() const {
+  return fileName_;
 }
 
-void *Module::handle() const {
-  return _handle;
+const Configuration& Module::conf() const {
+  return conf_;
 }
 
-const char *Module::callback() const {
-  return _callback;
+void* Module::handle() const {
+  return handle_;
 }
 
-std::vector <void*> &Module::callbacks() {
-  return _callbacks;
+const char* Module::callback() const {
+  return callback_;
+}
+
+std::vector<void*>& Module::callbacks() {
+  return callbacks_;
 }
