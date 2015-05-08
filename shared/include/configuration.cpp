@@ -24,76 +24,77 @@
 
 #include "configuration.h"
 
-Configuration::Configuration(const std::string fileName) {
-  initialize(fileName);
+Configuration::Configuration(const std::string filename) {
+  initialize(filename);
 }
 
 Configuration::Configuration() {
-  _error = true;
-  errorMessage = "Configuration::Configuration(): class not initialized";
+  error_ = true;
+  error_message_ = "Configuration::Configuration(): class not initialized";
 }
 
-bool Configuration::initialize(const std::string fileName) {
-  std::string line, option, value;
-  size_t delimiter, openingQuote, closingQuote;
-  std::ifstream file;
-  _fileName = fileName;
-  file.open(fileName.c_str());
+bool Configuration::initialize(const std::string filename) {
+  filename_ = filename;
+  std::ifstream file(filename_.c_str());
   if (!file) {
-    _error = true;
-    errorMessage = "Configuration::initialize(): " + fileName + ": " +
-                   strerror(errno);
+    error_ = true;
+    error_message_ = "Configuration::initialize(): " + filename + ": " +
+                     strerror(errno);
     return false;
   }
+  /* Allow initialize() to be called multiple times. */
+  options_.clear();
+  std::string line;
   while (getline(file, line)) {
-    delimiter = line.find('=');
-    option = line.substr(0, delimiter);
-    value = line.substr(delimiter + 1);
-    openingQuote = value.find('"');
+    const size_t delimiter = line.find('=');
+    const std::string option = line.substr(0, delimiter);
+    const std::string value = line.substr(delimiter + 1);
+    const size_t openingQuote = value.find('"');
     if (openingQuote != std::string::npos) {
-      closingQuote = value.find('"', openingQuote + 1);
+      const size_t closingQuote = value.find('"', openingQuote + 1);
       if (closingQuote != std::string::npos) {
         value = value.substr(openingQuote + 1,
                              closingQuote - openingQuote - 1);
       }
     }    
-    options[option].push_back(value);
+    options_[option].push_back(value);
   }
   file.close();
-  _error = false;
-  errorMessage.clear();
+  error_ = false;
+  error_message_.clear();
   return true;
 }
 
 Configuration::operator bool() const {
-  return !_error;
+  return !error_;
 }
 
-const std::string &Configuration::error() const {
-  return errorMessage;
+const std::string& Configuration::error() const {
+  return error_message_;
 }
 
-const std::string &Configuration::fileName() const {
-  return _fileName;
+const std::string& Configuration::filename() const {
+  return filename_;
 }
 
-const std::string &Configuration::getString(const std::string option) const {
-  std::map <std::string, std::vector <std::string>>::const_iterator _option = options.find(option);
-  if (_option == options.end()) {
-    return empty;
+const std::string Configuration::getString(const std::string option) const {
+  auto option_itr = options_.find(option);
+  if (option_itr == options_.end()) {
+    return "";
   }
-  return (_option -> second)[0];
+  return (option_itr->second)[0];
 }
 
-const std::vector <std::string> &Configuration::getStrings(const std::string option) const {
-  std::map <std::string, std::vector <std::string>>::const_iterator _option = options.find(option);
-  return _option -> second;
+const std::vector<std::string>& Configuration::getStrings(
+    const std::string option) const {
+  auto option_itr = options_.find(option);
+  return option_itr->second;
 }
 
 size_t Configuration::getNumber(const std::string option) const {
-  std::map <std::string, std::vector <std::string>>::const_iterator _option = options.find(option);
-  if (_option == options.end()) {
-    return std::numeric_limits <size_t>::max();
+  auto option_itr = options_.find(option);
+  if (option_itr == options_.end()) {
+    return std::numeric_limits<size_t>::max();
   }
-  return strtoul((_option -> second)[0].c_str(), nullptr, 10);
+  return strtoul((option_itr->second)[0].c_str(), nullptr, 10);
 }

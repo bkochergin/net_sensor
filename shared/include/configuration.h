@@ -42,16 +42,16 @@ class Configuration {
     bool initialize(const std::string);
     operator bool() const;
     const std::string &error() const;
-    const std::string &fileName() const;
-    const std::string &getString(const std::string) const;
-    const std::vector <std::string> &getStrings(const std::string) const;
+    const std::string &filename() const;
+    const std::string getString(const std::string) const;
+    const std::vector<std::string> &getStrings(const std::string) const;
     size_t getNumber(const std::string) const;
   private:
-    std::map <std::string, std::vector <std::string>> options;
-    std::string _fileName;
-    bool _error;
-    std::string errorMessage;
-    std::string empty;
+    std::map<std::string, std::vector<std::string>> options_;
+    std::string filename_;
+    bool error_;
+    std::string error_message_;
+    std::string empty_;
 };
 
 #endif

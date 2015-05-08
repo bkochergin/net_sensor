@@ -56,7 +56,7 @@ class Module {
     const std::string& filter() const;
     const bpf_program& bpfProgram() const;
     const std::string& name() const;
-    const std::string& fileName() const;
+    const std::string& filename() const;
     const Configuration& conf() const;
     void* handle() const;
     const char* callback() const;
@@ -65,7 +65,7 @@ class Module {
     bool error_;
     std::string errorMessage;
     std::string name_;
-    std::string fileName_;
+    std::string filename_;
     Configuration conf_;
     void* handle_;
     char* callback_;

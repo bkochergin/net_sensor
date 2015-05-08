@@ -37,13 +37,13 @@ Module::Module(const std::string& moduleDirectory,
   std::string moduleErrorMessage;
   pcap_t *pcapDescriptor;
   name_ = name;
-  fileName_ = moduleDirectory + '/' + name + ".so";
+  filename_ = moduleDirectory + '/' + name + ".so";
   if (!conf_.initialize(configurationDirectory + '/' + name + ".conf")) {
     error_ = true;
     errorMessage = conf_.error();
     return;
   }
-  handle_ = dlopen(fileName_.c_str(), RTLD_NOW);
+  handle_ = dlopen(filename_.c_str(), RTLD_NOW);
   if (handle_ == nullptr) {
     error_ = true;
     errorMessage = "dlopen(): ";
@@ -57,7 +57,7 @@ Module::Module(const std::string& moduleDirectory,
   callback_ = nullptr;
   if (initialize_ == nullptr || flush == nullptr || finish == nullptr) {
     error_ = true;
-    errorMessage = fileName_ + ": dlsym(): " + dlerror();
+    errorMessage = filename_ + ": dlsym(): " + dlerror();
     return;
   }
   char* callback__ = (char*)dlsym(handle_, "callback");
@@ -83,7 +83,7 @@ Module::Module(const std::string& moduleDirectory,
   if (pcap_compile(pcapDescriptor, &bpfProgram_, (char*)filter_.c_str(),
                    1 /* Optimize. */, 0 /* Netmask. */) == -1) {
     error_ = true;
-    errorMessage = fileName_ + ": pcap_compile(): " +
+    errorMessage = filename_ + ": pcap_compile(): " +
                    pcap_geterr(pcapDescriptor);
     return;
   }
@@ -132,8 +132,8 @@ const std::string& Module::name() const {
   return name_;
 }
 
-const std::string& Module::fileName() const {
-  return fileName_;
+const std::string& Module::filename() const {
+  return filename_;
 }
 
 const Configuration& Module::conf() const {

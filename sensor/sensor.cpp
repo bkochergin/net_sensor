@@ -172,14 +172,14 @@ int main(int argc, char *argv[]) {
   }
   if (conf.getString("logging") != "on" && 
       conf.getString("logging") != "off") {
-    cerr << argv[0] << ": " << conf.fileName() << ": "
+    cerr << argv[0] << ": " << conf.filename() << ": "
          << "unknown logging mode \"" << conf.getString("logging")
          << "\" specified" << endl;
     return 1;
   }
   if (conf.getString("logging") == "on") {
     if (conf.getString("log") == "") {
-      cerr << argv[0] << ": " << conf.fileName() << ": no log file specified"
+      cerr << argv[0] << ": " << conf.filename() << ": no log file specified"
            << endl;
       return 1;
     }
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
           modules[i].processPacket =
               (processPacketFunction)dlsym(modules[i].handle(), "processPacket");
           if (modules[i].processPacket == nullptr) {
-            cerr << argv[0] << ": " << modules[i].fileName() << ": no "
+            cerr << argv[0] << ": " << modules[i].filename() << ": no "
                  << "\"processPacket\" callback defined" << endl;
             return 1;
           }
@@ -233,18 +233,18 @@ int main(int argc, char *argv[]) {
         else {
           itr = moduleIndex.find(dependencies[j]);
           if (modules[i].name() == dependencies[j]) {
-            cerr << argv[0] << ": " << modules[i].fileName()
+            cerr << argv[0] << ": " << modules[i].filename()
                  << ": module cannot depend on itself" << endl;
             return 1;
           }
           if (itr == moduleIndex.end()) {
-            cerr << argv[0] << ": " << modules[i].fileName()
+            cerr << argv[0] << ": " << modules[i].filename()
                  << ": dependency \"" << dependencies[j] << "\" not found"
                  << endl;
             return 1;
           }
           if (modules[itr->second].callback() == nullptr) {
-            cerr << argv[0] << ": " <<  modules[i].fileName()
+            cerr << argv[0] << ": " <<  modules[i].filename()
                  << ": dependency \"" << dependencies[j]
                  << "\" has no callback defined" << endl;
             return 1;
@@ -252,7 +252,7 @@ int main(int argc, char *argv[]) {
           modules[itr->second].callbacks().push_back(dlsym(modules[i].handle(),
                                                      modules[itr->second].callback()));
           if (*(modules[itr->second].callbacks().rbegin()) == nullptr) {
-            cerr << argv[0] << ": " << modules[i].fileName() << ": no \""
+            cerr << argv[0] << ": " << modules[i].filename() << ": no \""
                  << modules[itr->second].callback() << "\" callback defined"
                  << endl;
             return 1;
@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
   /* Initialize modules. */
   for (size_t i = 0; i < modules.size(); ++i) {
     if (modules[i].initialize(logger) != 0) {
-      cerr << argv[0] << ": " << modules[i].fileName() << ": "
+      cerr << argv[0] << ": " << modules[i].filename() << ": "
            << modules[i].error() << endl;
       return 1;
     }
