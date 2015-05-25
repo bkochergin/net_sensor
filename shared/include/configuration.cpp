@@ -48,7 +48,7 @@ bool Configuration::initialize(const std::string filename) {
   while (getline(file, line)) {
     const size_t delimiter = line.find('=');
     const std::string option = line.substr(0, delimiter);
-    const std::string value = line.substr(delimiter + 1);
+    std::string value = line.substr(delimiter + 1);
     const size_t openingQuote = value.find('"');
     if (openingQuote != std::string::npos) {
       const size_t closingQuote = value.find('"', openingQuote + 1);
