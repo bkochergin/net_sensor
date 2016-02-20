@@ -155,7 +155,7 @@ extern "C" {
      * Rehash the address stats table for as many IPv4 addresses as we may need
      * to hold in it.
      */
-    addressStats.rehash(conf.getNumber("maxIPs"));
+    addressStats.reserve(conf.getNumber("maxIPs"));
     /*
      * Because Stats structures are fairly small, we will pre-allocate as many
      * of them as we may need so that we can later hand them out in constant

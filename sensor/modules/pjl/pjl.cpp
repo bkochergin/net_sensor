@@ -146,7 +146,7 @@ extern "C" {
      * Rehash the session table for as many sessions as we may need to hold in
      * it.
      */
-    sessions.rehash(conf.getNumber("maxSessions"));
+    sessions.reserve(conf.getNumber("maxSessions"));
     if (!memory.initialize(conf.getNumber("maxSessions"))) {
       error = memory.error();
       return 1;

@@ -252,7 +252,7 @@ extern "C" {
      * Rehash the session table for as many sessions as we may need to hold in
      * it.
      */
-    sessions.rehash(conf.getNumber("maxSessions"));
+    sessions.reserve(conf.getNumber("maxSessions"));
     /*
      * Because HTTPSession structures will be allocated very frequently (as
      * often as once per TCP packet with a payload, depending on this module's

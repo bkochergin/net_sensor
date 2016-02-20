@@ -278,7 +278,7 @@ extern "C" {
      * Rehash the session table for as many sessions as we may need to hold in
      * it.
      */
-    sessions.rehash(conf.getNumber("maxSessions"));
+    sessions.reserve(conf.getNumber("maxSessions"));
     /*
      * Because UDPTrackerSession classes are fairly small, we will
      * pre-allocate as many of them as we may need so that we can later hand
