@@ -32,10 +32,11 @@
 #include <locale>
 #include <map>
 #include <queue>
+#include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <memory>
 #include <unordered_map>
 
 #include <include/address.h>
@@ -56,20 +57,20 @@ using namespace std;
 /*
  * A prefix tree of internal networks whose IPv4 addresses we'll be monitoring.
  */
-map <uint32_t, uint32_t> networks;
+map<uint32_t, uint32_t> networks;
 /*
  * The stats table is a hash table of shared pointers to Stats structures with
  * IPv4 addresses as keys.
  */
-static unordered_map <uint32_t, shared_ptr <Stats>> addressStats;
+static unordered_map<uint32_t, shared_ptr<Stats>> addressStats;
 /* Stats memory allocator. */
-static Memory <Stats> memory;
+static Memory<Stats> memory;
 /* Locks for the stats table. */
-static pthread_mutex_t *locks;
+static mutex* locks;
 static bool warning = true;
 static uint32_t timeout, threshold, mailInterval, lastFlush, numPackets;
 static string interface;
-static Logger *logger;
+static Logger* logger;
 
 static SMTP smtp;
 
@@ -125,8 +126,8 @@ static string size(double bytes) {
   return size.str();
 }
 
-void shell(ostringstream &output, const string &command) {
-  FILE *stdout = popen(command.c_str(), "r");
+void shell(ostringstream& output, const string& command) {
+  FILE* stdout = popen(command.c_str(), "r");
   char line[1024];
   while (fgets(line, sizeof(line), stdout) != nullptr) {
     output << line;
@@ -134,7 +135,7 @@ void shell(ostringstream &output, const string &command) {
   pclose(stdout);
 }
 
-class Thousands : public numpunct <char> {
+class Thousands : public numpunct<char> {
   protected:
     string do_grouping() const {
       return "\003";
@@ -142,8 +143,7 @@ class Thousands : public numpunct <char> {
 };
 
 extern "C" {
-  int initialize(const Configuration &conf, Logger &logger, string &error) {
-    int _error;
+  int initialize(const Configuration& conf, Logger& logger, string& error) {
     timeout = conf.getNumber("timeout");
     threshold = conf.getNumber("threshold");
     mailInterval = conf.getNumber("mailInterval");
@@ -169,20 +169,7 @@ extern "C" {
      * We will be locking the stats hash table one bucket at a time, so
      * allocate one mutex per bucket.
      */
-    locks = new(nothrow) pthread_mutex_t[addressStats.bucket_count()];
-    if (locks == nullptr) {
-      error = "malloc(): ";
-      error += strerror(errno);
-      return 1;
-    }
-    for (size_t i = 0; i < addressStats.bucket_count(); ++i) {
-      _error = pthread_mutex_init(&(locks[i]), nullptr);
-      if (_error != 0) {
-        error = "pthread_mutex_init(): ";
-        error += strerror(_error);
-        return 1;
-      }
-    }
+    locks = new(nothrow) mutex[addressStats.bucket_count()];
     if (!smtp.initialize(conf.getString("smtpServer"),
                          conf.getNumber("smtpAuth"),
                          conf.getString("smtpUser"),
@@ -196,7 +183,7 @@ extern "C" {
     smtp.subject().imbue(locale(smtp.subject().getloc(),
                          new Thousands()));
     smtp.message().imbue(locale(smtp.message().getloc(),
-                               new Thousands()));
+                                new Thousands()));
     for (size_t i = 0; i < conf.getStrings("addresses").size(); ++i) {
       networks.insert(cidrToIPs(conf.getStrings("addresses")[i]));
     }
@@ -207,30 +194,29 @@ extern "C" {
    * Determines whether an IPv4 address belongs to any of our internal networks
    * in logarithmic time.
    */
-  bool internal(const map <uint32_t, uint32_t> &networks, const uint32_t &ip) {
-    static map <uint32_t, uint32_t>::const_iterator itr;
+  bool internal(const map<uint32_t, uint32_t>& networks, const uint32_t& ip) {
+    static map<uint32_t, uint32_t>::const_iterator itr;
     itr = --networks.upper_bound(ip);
     return (ip >= itr -> first && ip <= itr -> second);
   }
 
-  int processPacket(const Packet &packet) {
+  int processPacket(const Packet& packet) {
     static size_t bucket;
-    static unordered_map <uint32_t, shared_ptr <Stats>>::iterator itr;
-    static shared_ptr <Stats> stats;
+    static unordered_map<uint32_t, shared_ptr<Stats>>::iterator itr;
+    static shared_ptr<Stats> stats;
     if (internal(networks, ntohl(packet.sourceIP())) == true) {
       bucket = addressStats.bucket(packet.sourceIP());
-      pthread_mutex_lock(&(locks[bucket]));
+      lock_guard<mutex> lock(locks[bucket]);
       itr = addressStats.find(packet.sourceIP());
       if (itr == addressStats.end()) {
         stats = memory.allocate();
-        if (stats == shared_ptr <Stats>()) {        
+        if (stats == shared_ptr<Stats>()) {        
           if (warning == true) {
             logger -> lock();
             (*logger) << "PPS module: stats table is full." << endl;
             logger -> unlock();
             warning = false;
           }
-          pthread_mutex_unlock(&(locks[bucket]));
           return 0;
         }
         itr = addressStats.insert(make_pair(packet.sourceIP(), stats)).first;
@@ -238,23 +224,21 @@ extern "C" {
       itr -> second -> lastUpdate = packet.time().seconds();
       ++(itr -> second -> outgoingPackets);
       itr -> second -> outgoingBytes += packet.capturedSize();
-      pthread_mutex_unlock(&(locks[bucket]));
     }
     else {
       if (internal(networks, ntohl(packet.destinationIP())) == true) {
         bucket = addressStats.bucket(packet.destinationIP());
-        pthread_mutex_lock(&(locks[bucket]));
+        lock_guard<mutex> lock(locks[bucket]);
         itr = addressStats.find(packet.destinationIP());
         if (itr == addressStats.end()) {
           stats = memory.allocate();
-          if (stats == shared_ptr <Stats>()) {
+          if (stats == shared_ptr<Stats>()) {
             if (warning == true) {
               logger -> lock();
               (*logger) << "PPS module: stats table is full." << endl;
               logger -> unlock();
               warning = false;
             }
-            pthread_mutex_unlock(&(locks[bucket]));
             return 0;
           }
           itr = addressStats.insert(make_pair(packet.destinationIP(), stats)).first;
@@ -262,7 +246,6 @@ extern "C" {
         itr -> second -> lastUpdate = packet.time().seconds();
         ++(itr -> second -> incomingPackets); 
         itr -> second -> incomingBytes += packet.capturedSize();
-        pthread_mutex_unlock(&(locks[bucket]));
       }
     }
     return 0;
@@ -270,11 +253,11 @@ extern "C" {
 
   int flush() {
     static time_t _time;
-    static unordered_map <uint32_t, shared_ptr <Stats>>::local_iterator localItr;
-    static vector <uint32_t> erase;
+    static unordered_map<uint32_t, shared_ptr<Stats>>::local_iterator localItr;
+    static vector<uint32_t> erase;
     static uint64_t incomingPPS, outgoingPPS;
-    static queue <PPSMail> mailQueue;
-    static vector <string> ptrRecords;
+    static queue<PPSMail> mailQueue;
+    static vector<string> ptrRecords;
     static string ip, _ptrRecords;
     static ostringstream command;
     _time = time(nullptr);
@@ -284,7 +267,7 @@ extern "C" {
          * Lock the bucket in which we will be checking for timed-out IPv4
          * addresses to prevent a race with processPacket().
          */
-        pthread_mutex_lock(&(locks[i]));
+        locks[i].lock();
         for (localItr = addressStats.begin(i); localItr != addressStats.end(i);
              ++localItr) {
           /*
@@ -311,7 +294,7 @@ extern "C" {
         for (size_t j = 0; j < erase.size(); ++j) {
           addressStats.erase(addressStats.find(erase[j]));
         }
-        pthread_mutex_unlock(&(locks[i]));
+        locks[i].unlock();
         while (!mailQueue.empty()) {
           ip = textIP(mailQueue.front().ip());
           smtp.subject() << threshold << " Packets/s Threshold Exceeded ("
