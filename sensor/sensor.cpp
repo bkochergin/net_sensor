@@ -80,7 +80,7 @@ void *flush(void*) {
 }
 
 void *stats(void*) {
-  pcap_stat oldPcapStats, pcapStats;
+  pcap_stat oldPcapStats, pcapStats = {};
   uint32_t processedDifference, droppedDifference;
   uint64_t totalDroppedBPFPackets = 0, oldDroppedPackets = 0;
   while (capture) {
@@ -91,6 +91,7 @@ void *stats(void*) {
       logger << logger.time() << "Sensor: " << pcap_geterr(pcapDescriptor)
              << endl;
       logger.unlock();
+      continue;
     }
     if (pcapStats.ps_recv >= oldPcapStats.ps_recv) {
       processedDifference = pcapStats.ps_recv - oldPcapStats.ps_recv;
