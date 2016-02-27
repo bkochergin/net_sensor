@@ -254,7 +254,6 @@ extern "C" {
   int flush() {
     static time_t _time;
     static unordered_map<uint32_t, shared_ptr<Stats>>::local_iterator localItr;
-    static vector<uint32_t> erase;
     static uint64_t incomingPPS, outgoingPPS;
     static queue<PPSMail> mailQueue;
     static vector<string> ptrRecords;
@@ -268,15 +267,7 @@ extern "C" {
          * addresses to prevent a race with processPacket().
          */
         locks[i].lock();
-        for (localItr = addressStats.begin(i); localItr != addressStats.end(i);
-             ++localItr) {
-          /*
-           * Remove an IPv4 address from memory if it has been idle for at
-           * least as long as the configured idle timeout.
-           */
-          if (_time - localItr -> second -> lastUpdate >= timeout) {
-            erase.push_back(localItr -> first);
-          }
+        for (localItr = addressStats.begin(i); localItr != addressStats.end(i);) {
           incomingPPS = localItr -> second -> incomingPackets / (_time - lastFlush);
           outgoingPPS = localItr -> second -> outgoingPackets / (_time - lastFlush);
           if ((incomingPPS >= threshold || outgoingPPS >= threshold) &&
@@ -290,9 +281,17 @@ extern "C" {
           localItr -> second -> outgoingPackets = 0;
           localItr -> second -> incomingBytes = 0;
           localItr -> second -> outgoingBytes = 0;
-        }
-        for (size_t j = 0; j < erase.size(); ++j) {
-          addressStats.erase(addressStats.find(erase[j]));
+          /*
+           * Remove an IPv4 address from memory if it has been idle for at
+           * least as long as the configured idle timeout.
+           */
+          if (_time - localItr->second->lastUpdate >= timeout) {
+            const uint32_t ip_to_erase = localItr->first;
+            ++localItr;
+            addressStats.erase(ip_to_erase);
+          } else {
+            ++localItr;
+          }
         }
         locks[i].unlock();
         while (!mailQueue.empty()) {
@@ -337,7 +336,6 @@ extern "C" {
           smtp.subject().str("");
           smtp.message().str("");
         }
-        erase.clear();
       }
     }
     lastFlush = _time;
